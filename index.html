@@ -393,10 +393,8 @@ function renderAuth(){
   html+='<div class="remember-row" onclick="toggleRemember()">';
   html+='<div class="checkbox'+(state.rememberMe?' checked':'')+'">'+( state.rememberMe?'<svg viewBox="0 0 24 24" width="12" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>':'' )+'</div>';
   html+='<span style="font-size:13px;color:var(--sub)">'+t('rememberMe')+'</span></div>';
-  html+='<button class="btn btn-primary" id="auth-submit-btn">'+(isLogin?t('loginBtn'):t('registerBtn'))+'</button>';
+  html+='<button class="btn btn-primary" onclick="doAuth()">'+(isLogin?t('loginBtn'):t('registerBtn'))+'</button>';
   form.innerHTML=html;
-  var btn=document.getElementById('auth-submit-btn');
-  if(btn)btn.addEventListener('click',doAuth);
 }
 
 function toggleRemember(){state.rememberMe=!state.rememberMe;renderAuth();}
@@ -1017,7 +1015,7 @@ document.getElementById('auth-toggle').addEventListener('click',function(){
 });
 
 // Render auth form on load
-renderAuth();
+window.addEventListener('load', function(){ renderAuth(); });
 </script>
 </body>
 </html>
