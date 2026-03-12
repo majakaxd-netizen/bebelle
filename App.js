@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useContext, useMemo, useRef } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, Alert, StatusBar, Image, Linking, ActivityIndicator, RefreshControl } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Notifications from 'expo-notifications';
-import * as Device from 'expo-device';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, useFocusEffect } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 var _B='https://api.airtable.com/v0/app5hrql36OKNfWvI/';
@@ -125,14 +123,6 @@ export default function App() {
   function getHairTip(code,temp,lang){var ja=lang==='ja';if(temp>=30)return ja?'とても暑いです！UVカットスプレーでヘアケアをしましょう。':'Very hot! Use UV protection spray to shield your hair from sun damage.';if(temp>=26)return ja?'暑い日が続いています。保湿ヘアミストがオススメです。':'Hot and sunny! Keep hair hydrated with a leave-in moisture mist.';if(code>=200&&code<600)return ja?'雨の日は湿気で髪が広がります。洗い流さないトリートメントでまとめましょう。':'Rainy day! Humidity causes frizz — use a leave-in conditioner to tame your hair.';if(temp<18)return ja?'涼しい季節です。頭皮マッサージで血行を促進しましょう！':'Cool day! Great time for a head spa treatment.';return ja?'今日は良いコンディションです。サロンでのトリートメントにぴったり！':'Perfect salon weather today! Great day for a relaxing treatment.';}
 
   function AppProvider(props){
-    useEffect(function(){
-      Notifications.setNotificationHandler({handleNotification:async function(){return {shouldShowAlert:true,shouldPlaySound:true,shouldSetBadge:true};},});
-      if(Device.isDevice){
-        Notifications.requestPermissionsAsync().then(function(s){
-          if(s.status!=='granted'){console.log('Notification permission denied');}
-        });
-      }
-    },[]);
     var ls=useState(null);var lang=ls[0];var setLang=ls[1];
     var us=useState(null);var user=us[0];var setUser=us[1];
     var usrs=useState([]);var users=usrs[0];var setUsers=usrs[1];
@@ -145,11 +135,6 @@ export default function App() {
     return React.createElement(AppCtx.Provider,{value:{lang:lang,setLang:setLang,t:t,user:user,setUser:setUser,isAdmin:isAdmin,users:users,setUsers:setUsers,adminNotifs:adminNotifs,pushAdminNotif:pushAdminNotif,dismissAdminNotif:dismissAdminNotif,clearAdminNotifs:clearAdminNotifs}},props.children);
   }
   function useApp(){return useContext(AppCtx);}
-  async function sendLocalNotif(title,body){
-    try{
-      await Notifications.scheduleNotificationAsync({content:{title:title,body:body,sound:true},trigger:null});
-    }catch(e){console.log('Notif error:',e.message);}
-  }
 
   function WeatherWidget(){
     var app=useApp();
@@ -464,7 +449,8 @@ export default function App() {
     var app=useApp();var t=app.t;
     var insets={top:44,bottom:34,left:0,right:0};
     var scd=useState([]);var salonCfgData=scd[0];var setSalonCfgData=scd[1];
-    useEffect(function(){_getAll('salon_config',function(e,d){if(!e)setSalonCfgData(d||[]);});},[]);
+    var Navigation=require('@react-navigation/native');
+    useFocusEffect(React.useCallback(function(){_getAll('salon_config',function(e,d){if(!e)setSalonCfgData(d||[]);});},[]));
     var cfg=salonCfgData[0]||{};
     var photos=[cfg.photo1||'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=500',cfg.photo2||'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=500',cfg.photo3||'https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?w=500'];
     return React.createElement(View,{style:{flex:1,backgroundColor:C.bg}},
@@ -520,6 +506,7 @@ export default function App() {
     var sp=useState('');var svPrice=sp[0];var setSvPrice=sp[1];
     var sdur=useState('');var svDur=sdur[0];var setSvDur=sdur[1];
     var sdc=useState('');var svDesc=sdc[0];var setSvDesc=sdc[1];
+    var sph=useState('');var svPhoto=sph[0];var setSvPhoto=sph[1];
     var tab=useState('services');var activeTab=tab[0];var setActiveTab=tab[1];
     var cfg=salonCfgData[0]||{};
     var ci=useState('');var cfgIg=ci[0];var setCfgIg=ci[1];
@@ -537,13 +524,30 @@ export default function App() {
     var cdComment=useState('');var newClosedComment=cdComment[0];var setNewClosedComment=cdComment[1];
     useEffect(function(){if(cfg.instagram!==undefined){setCfgIg(cfg.instagram||'');setCfgFb(cfg.facebook||'');setCfgLine(cfg.line||'');setCfgPhone(cfg.phone||'');setCfgAddr(cfg.address||'');setCfgHistory(cfg.history||'');setCfgPhoto1(cfg.photo1||'');setCfgPhoto2(cfg.photo2||'');setCfgPhoto3(cfg.photo3||'');setCfgPaypal(cfg.paypal||'');}},[cfg.instagram]);
     var inp={borderWidth:1,borderColor:C.border,borderRadius:10,padding:12,marginBottom:12,fontSize:14,backgroundColor:'#FFF',color:C.text};
-    function openAdd(){setEditing(null);setSvName('');setSvPrice('');setSvDur('');setSvDesc('');setShowForm(true);}
-    function openEdit(sv){setEditing(sv);setSvName(sv.name||'');setSvPrice(String(sv.price||''));setSvDur(String(sv.duration||''));setSvDesc(sv.description||'');setShowForm(true);}
+    function openAdd(){setEditing(null);setSvName('');setSvPrice('');setSvDur('');setSvDesc('');setSvPhoto('');setShowForm(true);}
+    function openEdit(sv){setEditing(sv);setSvName(sv.name||'');setSvPrice(String(sv.price||''));setSvDur(String(sv.duration||''));setSvDesc(sv.description||'');setSvPhoto(sv.photo||'');setShowForm(true);}
     function doSave(){
       if(!svName.trim()||!svPrice.trim()||!svDur.trim()){Alert.alert('',t.fillAll);return;}
-      var d={name:svName,price:parseInt(svPrice),duration:parseInt(svDur),description:svDesc};
+      var d={name:svName,price:parseInt(svPrice),duration:parseInt(svDur),description:svDesc,photo:svPhoto};
       if(editing){updateSv({id:editing.id,data:d}).then(function(){refetchSv();setShowForm(false);}).catch(function(e){Alert.alert('Error',e.message);});}
       else{insertSv(Object.assign({id:Date.now().toString()},d)).then(function(){refetchSv();setShowForm(false);}).catch(function(e){Alert.alert('Error',e.message);});}
+    }
+    function pickAndUpload(onSuccess){
+      var ImagePicker=require('expo-image-picker');
+      ImagePicker.requestMediaLibraryPermissionsAsync().then(function(perm){
+        if(!perm.granted){Alert.alert('','Permission required');return;}
+        ImagePicker.launchImageLibraryAsync({mediaTypes:ImagePicker.MediaTypeOptions.Images,allowsEditing:true,quality:0.7}).then(function(result){
+          if(result.canceled||!result.assets||!result.assets[0])return;
+          var uri=result.assets[0].uri;
+          var fd=new FormData();
+          fd.append('file',{uri:uri,type:'image/jpeg',name:'photo.jpg'});
+          fd.append('upload_preset','bebelle');
+          fetch('https://api.cloudinary.com/v1_1/dtu902gsb/image/upload',{method:'POST',body:fd})
+            .then(function(r){return r.json();})
+            .then(function(data){if(data.secure_url){onSuccess(data.secure_url);}else{Alert.alert('Error','Upload failed');}})
+            .catch(function(){Alert.alert('Error','Upload failed');});
+        });
+      });
     }
     function saveConfig(){
       var data={instagram:cfgIg,facebook:cfgFb,line:cfgLine,phone:cfgPhone,address:cfgAddr,history:cfgHistory,photo1:cfgPhoto1,photo2:cfgPhoto2,photo3:cfgPhoto3,paypal:cfgPaypal};
@@ -616,9 +620,18 @@ export default function App() {
             React.createElement(TextInput,{style:{borderWidth:1,borderColor:C.border,borderRadius:10,padding:12,fontSize:13,backgroundColor:'#F9F9F9',color:C.text,minHeight:90,textAlignVertical:'top'},placeholder:app.lang==='ja'?'サロンの紹介文...':'Write your salon story...',placeholderTextColor:C.sub,value:cfgHistory,onChangeText:setCfgHistory,multiline:true})),
           React.createElement(View,{style:{backgroundColor:C.card,borderRadius:14,padding:16,marginBottom:14}},
             React.createElement(Text,{style:{fontSize:16,fontWeight:'700',color:C.text,marginBottom:8}},app.lang==='ja'?'写真URL (3枚)':'Photo URLs (3)'),
-            React.createElement(View,{style:{flexDirection:'row',marginBottom:10,alignItems:'center'}},React.createElement(TextInput,{style:{flex:1,borderWidth:1,borderColor:C.border,borderRadius:10,padding:10,fontSize:12,backgroundColor:'#F9F9F9',color:C.text},placeholder:'https://...',placeholderTextColor:C.sub,value:cfgPhoto1,onChangeText:setCfgPhoto1,autoCapitalize:'none'}),cfgPhoto1?React.createElement(Image,{source:{uri:cfgPhoto1},style:{width:44,height:44,borderRadius:8,marginLeft:8},resizeMode:'cover'}):null),
-            React.createElement(View,{style:{flexDirection:'row',marginBottom:10,alignItems:'center'}},React.createElement(TextInput,{style:{flex:1,borderWidth:1,borderColor:C.border,borderRadius:10,padding:10,fontSize:12,backgroundColor:'#F9F9F9',color:C.text},placeholder:'https://...',placeholderTextColor:C.sub,value:cfgPhoto2,onChangeText:setCfgPhoto2,autoCapitalize:'none'}),cfgPhoto2?React.createElement(Image,{source:{uri:cfgPhoto2},style:{width:44,height:44,borderRadius:8,marginLeft:8},resizeMode:'cover'}):null),
-            React.createElement(View,{style:{flexDirection:'row',marginBottom:10,alignItems:'center'}},React.createElement(TextInput,{style:{flex:1,borderWidth:1,borderColor:C.border,borderRadius:10,padding:10,fontSize:12,backgroundColor:'#F9F9F9',color:C.text},placeholder:'https://...',placeholderTextColor:C.sub,value:cfgPhoto3,onChangeText:setCfgPhoto3,autoCapitalize:'none'}),cfgPhoto3?React.createElement(Image,{source:{uri:cfgPhoto3},style:{width:44,height:44,borderRadius:8,marginLeft:8},resizeMode:'cover'}):null)),
+            React.createElement(View,{style:{marginBottom:12}},
+              cfgPhoto1?React.createElement(Image,{source:{uri:cfgPhoto1},style:{width:'100%',height:120,borderRadius:10,marginBottom:6},resizeMode:'cover'}):null,
+              React.createElement(TouchableOpacity,{style:{backgroundColor:'#F0E0E6',padding:12,borderRadius:10,alignItems:'center'},onPress:function(){pickAndUpload(function(url){setCfgPhoto1(url);});}},
+                React.createElement(Text,{style:{color:C.primary,fontWeight:'700',fontSize:14}},cfgPhoto1?'Change Photo 1':'Add Photo 1'))),
+            React.createElement(View,{style:{marginBottom:12}},
+              cfgPhoto2?React.createElement(Image,{source:{uri:cfgPhoto2},style:{width:'100%',height:120,borderRadius:10,marginBottom:6},resizeMode:'cover'}):null,
+              React.createElement(TouchableOpacity,{style:{backgroundColor:'#F0E0E6',padding:12,borderRadius:10,alignItems:'center'},onPress:function(){pickAndUpload(function(url){setCfgPhoto2(url);});}},
+                React.createElement(Text,{style:{color:C.primary,fontWeight:'700',fontSize:14}},cfgPhoto2?'Change Photo 2':'Add Photo 2'))),
+            React.createElement(View,{style:{marginBottom:12}},
+              cfgPhoto3?React.createElement(Image,{source:{uri:cfgPhoto3},style:{width:'100%',height:120,borderRadius:10,marginBottom:6},resizeMode:'cover'}):null,
+              React.createElement(TouchableOpacity,{style:{backgroundColor:'#F0E0E6',padding:12,borderRadius:10,alignItems:'center'},onPress:function(){pickAndUpload(function(url){setCfgPhoto3(url);});}},
+                React.createElement(Text,{style:{color:C.primary,fontWeight:'700',fontSize:14}},cfgPhoto3?'Change Photo 3':'Add Photo 3')))),
           React.createElement(TouchableOpacity,{style:{backgroundColor:configSaved?C.success:C.primary,padding:16,borderRadius:12,alignItems:'center',flexDirection:'row',justifyContent:'center'},onPress:saveConfig},React.createElement(MaterialIcons,{name:configSaved?'check-circle':'save',size:20,color:'#FFF'}),React.createElement(Text,{style:{color:'#FFF',fontSize:16,fontWeight:'bold',marginLeft:8}},configSaved?(app.lang==='ja'?'保存しました！':'Saved!'):(app.lang==='ja'?'保存する':'Save Changes'))))),
         activeTab==='closed'&&React.createElement(View,null,
           React.createElement(View,{style:{backgroundColor:C.card,borderRadius:14,padding:16,marginBottom:14}},
@@ -646,6 +659,9 @@ export default function App() {
             React.createElement(TextInput,{style:inp,placeholder:t.servicePrice,placeholderTextColor:C.sub,value:svPrice,onChangeText:setSvPrice,keyboardType:'numeric'}),
             React.createElement(TextInput,{style:inp,placeholder:t.serviceDuration,placeholderTextColor:C.sub,value:svDur,onChangeText:setSvDur,keyboardType:'numeric'}),
             React.createElement(TextInput,{style:inp,placeholder:t.serviceDesc,placeholderTextColor:C.sub,value:svDesc,onChangeText:setSvDesc,multiline:true,numberOfLines:3}),
+            svPhoto?React.createElement(Image,{source:{uri:svPhoto},style:{width:'100%',height:120,borderRadius:10,marginBottom:8},resizeMode:'cover'}):null,
+            React.createElement(TouchableOpacity,{style:{backgroundColor:'#F0E0E6',padding:12,borderRadius:10,alignItems:'center',marginBottom:10},onPress:function(){pickAndUpload(function(url){setSvPhoto(url);});}},
+              React.createElement(Text,{style:{color:C.primary,fontWeight:'700',fontSize:14}},svPhoto?'Change Photo':'Add Photo')),
             React.createElement(TouchableOpacity,{style:{backgroundColor:C.primary,padding:16,borderRadius:12,alignItems:'center'},onPress:doSave},React.createElement(Text,{style:{color:'#FFF',fontSize:16,fontWeight:'bold'}},t.save))))));
   }
 

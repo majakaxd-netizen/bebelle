@@ -1,0 +1,24 @@
+{
+  "name": "Bebelle Hair Salon",
+  "short_name": "Bebelle",
+  "description": "Book your appointment at Bebelle Hair Salon, Ishigaki Okinawa",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FDF5F7",
+  "theme_color": "#C9748F",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=192&h=192&fit=crop",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=512&h=512&fit=crop",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
+}
