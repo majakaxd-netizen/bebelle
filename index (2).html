@@ -393,12 +393,33 @@ function renderAuth(){
   html+='<div class="remember-row" onclick="toggleRemember()">';
   html+='<div class="checkbox'+(state.rememberMe?' checked':'')+'">'+( state.rememberMe?'<svg viewBox="0 0 24 24" width="12" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>':'' )+'</div>';
   html+='<span style="font-size:13px;color:var(--sub)">'+t('rememberMe')+'</span></div>';
-  html+='<button class="btn btn-primary" onclick="doAuth()">'+(isLogin?t('loginBtn'):t('registerBtn'))+'</button>';
+  html+='<button class="btn btn-primary" id="auth-submit-btn">'+(isLogin?t('loginBtn'):t('registerBtn'))+'</button>';
   form.innerHTML=html;
+  var btn=document.getElementById('auth-submit-btn');
+  if(btn)btn.addEventListener('click',doAuth);
 }
 
 function toggleRemember(){state.rememberMe=!state.rememberMe;renderAuth();}
 
+
+function uploadPhoto(callback){
+  var input=document.createElement('input');
+  input.type='file';input.accept='image/*';
+  input.onchange=function(e){
+    var file=e.target.files[0];if(!file)return;
+    var fd=new FormData();
+    fd.append('file',file);
+    fd.append('upload_preset','bebelle');
+    fd.append('cloud_name','dtu902gsb');
+    var btn=document.getElementById('upload-status');
+    if(btn)btn.textContent='Uploading...';
+    fetch('https://api.cloudinary.com/v1_1/dtu902gsb/image/upload',{method:'POST',body:fd})
+      .then(function(r){return r.json();})
+      .then(function(d){if(btn)btn.textContent='';callback(d.secure_url);})
+      .catch(function(){if(btn)btn.textContent='Error';});
+  };
+  input.click();
+}
 function doAuth(){
   var username=(document.getElementById('f-username')||{}).value||'';
   var password=(document.getElementById('f-password')||{}).value||'';
@@ -737,6 +758,7 @@ function renderServices(){
   var html='';
   state.services.forEach(function(s){
     html+='<div class="service-card">';
+    if(s.photo)html+='<img src="'+s.photo+'" style="width:100%;height:160px;object-fit:cover;border-radius:10px;margin-bottom:10px">';
     html+='<div style="display:flex;justify-content:space-between;align-items:flex-start">';
     html+='<div style="flex:1"><div style="font-weight:700;font-size:15px;margin-bottom:4px">'+s.name+'</div>';
     if(s.description)html+='<div style="font-size:13px;color:var(--sub);margin-bottom:6px">'+s.description+'</div>';
@@ -833,9 +855,12 @@ function renderAdmin(){
     html+='<input type="text" id="cfg-phone" placeholder="Phone" value="'+(cfg.phone||'')+'">';
     html+='<input type="text" id="cfg-addr" placeholder="Address" value="'+(cfg.address||'')+'">';
     html+='<textarea id="cfg-history" placeholder="Our Story" rows="4" style="resize:none">'+(cfg.history||'')+'</textarea>';
-    html+='<input type="text" id="cfg-p1" placeholder="Photo 1 URL" value="'+(cfg.photo1||'')+'">';
-    html+='<input type="text" id="cfg-p2" placeholder="Photo 2 URL" value="'+(cfg.photo2||'')+'">';
-    html+='<input type="text" id="cfg-p3" placeholder="Photo 3 URL" value="'+(cfg.photo3||'')+'">';
+    [1,2,3].forEach(function(n){
+      html+='<div style="margin-bottom:12px">';
+      if(cfg['photo'+n])html+='<img id="cfg-photo-preview-'+n+'" src="'+cfg['photo'+n]+'" style="width:100%;height:120px;object-fit:cover;border-radius:10px;margin-bottom:8px">';
+      html+='<button id="cfg-photo-btn-'+n+'" type="button" onclick="uploadConfigPhoto('+n+')" style="width:100%;padding:12px;border:2px dashed var(--primary);background:transparent;border-radius:10px;color:var(--primary);font-size:13px;cursor:pointer">📷 Upload Photo '+n+'</button>';
+      html+='</div>';
+    });
     html+='<button class="btn btn-primary" onclick="saveConfig()">'+t('save')+'</button>';
     html+='</div>';
   } else if(state.adminTab==='closed'){
@@ -863,16 +888,26 @@ function saveConfig(){
     phone:(document.getElementById('cfg-phone')||{}).value||'',
     address:(document.getElementById('cfg-addr')||{}).value||'',
     history:(document.getElementById('cfg-history')||{}).value||'',
-    photo1:(document.getElementById('cfg-p1')||{}).value||'',
-    photo2:(document.getElementById('cfg-p2')||{}).value||'',
-    photo3:(document.getElementById('cfg-p3')||{}).value||''
+    photo1:state.salonCfg.photo1||'',
+    photo2:state.salonCfg.photo2||'',
+    photo3:state.salonCfg.photo3||''
   };
   var cfg=state.salonCfg;
   var promise=cfg&&cfg._id?_patch('salon_config',cfg._id,fields):_post('salon_config',fields);
   promise.then(function(r){
     var f=r.fields||{};f._id=r.id;
-    state.salonCfg=f;
+    state.salonCfg=Object.assign(state.salonCfg,fields);state.salonCfg._id=r.id;
     alert(t('save')+' ✓');
+    renderAbout();
+  });
+}
+function uploadConfigPhoto(num){
+  uploadPhoto(function(url){
+    state.salonCfg['photo'+num]=url;
+    var preview=document.getElementById('cfg-photo-preview-'+num);
+    if(preview)preview.src=url;
+    var btn=document.getElementById('cfg-photo-btn-'+num);
+    if(btn)btn.textContent='✓ Photo '+num+' uploaded';
   });
 }
 
@@ -896,29 +931,40 @@ function deleteClosedDay(id){
 }
 
 function openAddService(){
-  state.editingService=null;
   var name=prompt(t('serviceName'));if(!name)return;
   var price=prompt(t('servicePrice'));if(!price)return;
   var duration=prompt(t('serviceDuration'));if(!duration)return;
   var desc=prompt(t('serviceDesc'))||'';
-  _post('services',{name:name,price:parseFloat(price),duration:parseInt(duration),description:desc}).then(function(r){
-    var f=r.fields||{};f._id=r.id;
-    state.services.push(f);
-    renderAdmin();
-    renderServices();
+  if(!confirm('Add a photo?')){
+    _post('services',{name:name,price:parseFloat(price),duration:parseInt(duration),description:desc,photo:''}).then(function(r){
+      var f=r.fields||{};f._id=r.id;state.services.push(f);renderAdmin();renderServices();
+    });
+    return;
+  }
+  uploadPhoto(function(url){
+    _post('services',{name:name,price:parseFloat(price),duration:parseInt(duration),description:desc,photo:url}).then(function(r){
+      var f=r.fields||{};f._id=r.id;state.services.push(f);renderAdmin();renderServices();
+    });
   });
 }
 
 function openEditService(id){
   var s=state.services.find(function(x){return x._id===id;});if(!s)return;
-  var name=prompt(t('serviceName'),s.name);if(!name)return;
-  var price=prompt(t('servicePrice'),s.price);if(!price)return;
-  var duration=prompt(t('serviceDuration'),s.duration);if(!duration)return;
+  var name=prompt(t('serviceName'),s.name);if(name===null)return;
+  var price=prompt(t('servicePrice'),s.price);if(price===null)return;
+  var duration=prompt(t('serviceDuration'),s.duration);if(duration===null)return;
   var desc=prompt(t('serviceDesc'),s.description||'');
-  _patch('services',s._id,{name:name,price:parseFloat(price),duration:parseInt(duration),description:desc||''}).then(function(){
-    s.name=name;s.price=parseFloat(price);s.duration=parseInt(duration);s.description=desc||'';
-    renderAdmin();renderServices();
-  });
+  function saveService(photoUrl){
+    _patch('services',s._id,{name:name,price:parseFloat(price),duration:parseInt(duration),description:desc||'',photo:photoUrl}).then(function(){
+      s.name=name;s.price=parseFloat(price);s.duration=parseInt(duration);s.description=desc||'';s.photo=photoUrl;
+      renderAdmin();renderServices();
+    });
+  }
+  if(confirm('Change photo?')){
+    uploadPhoto(function(url){saveService(url);});
+  } else {
+    saveService(s.photo||'');
+  }
 }
 
 function deleteService(id){
