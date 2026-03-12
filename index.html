@@ -60,7 +60,7 @@ audio{display:none;}
 <body>
 
 <!-- LANG SCREEN -->
-<div id="lang-screen" class="lang-screen">
+<div id="app"><div id="lang-screen" class="lang-screen">
   <img src="https://images.unsplash.com/photo-1560066984-138dadb4c035?w=300" class="lang-photo" alt="Bebelle">
   <h1 style="color:#fff;font-size:32px;font-weight:800;margin-bottom:4px;">Bebelle</h1>
   <p style="color:var(--primary);font-size:14px;letter-spacing:3px;margin-bottom:32px;">HAIR SALON</p>
@@ -453,6 +453,7 @@ function loginUser(u){
   state.user=u;
   if(state.rememberMe)localStorage.setItem('bebelle_user',JSON.stringify(u));
   loadData();
+  showScreen('res-screen');
   document.getElementById('music-btn').style.display='flex';
 }
 
@@ -1017,5 +1018,5 @@ document.getElementById('auth-toggle').addEventListener('click',function(){
 // Render auth form on load
 window.addEventListener('load', function(){ renderAuth(); });
 </script>
-</body>
+</div></body>
 </html>
