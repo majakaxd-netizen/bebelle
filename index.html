@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Bebelle Hair Salon</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#FDF5F7;color:#1F2937;max-width:430px;margin:0 auto;min-height:100vh;}
+:root{--primary:#C9748F;--bg:#FDF5F7;--card:#FFFFFF;--text:#1F2937;--sub:#6B7280;--border:#E5E7EB;--success:#10B981;--error:#EF4444;--warning:#F59E0B;--accent:#FBCFE8;}
+.screen{display:none;min-height:100vh;padding-bottom:70px;}
+.screen.active{display:block;}
+.tab-bar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:#fff;border-top:1px solid var(--border);display:flex;z-index:100;}
+.tab-btn{flex:1;padding:8px 4px;border:none;background:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;color:var(--sub);}
+.tab-btn.active{color:var(--primary);}
+.tab-btn svg{width:22px;height:22px;}
+.card{background:#fff;border-radius:14px;padding:16px;margin:12px 16px;box-shadow:0 1px 4px rgba(0,0,0,0.06);}
+.btn{width:100%;padding:14px;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:10px;}
+.btn-primary{background:var(--primary);color:#fff;}
+.btn-secondary{background:transparent;border:2px solid var(--primary);color:var(--primary);}
+.btn-danger{background:#FEE2E2;color:var(--error);}
+input,select,textarea{width:100%;padding:13px 14px;border:1px solid var(--border);border-radius:10px;font-size:15px;margin-bottom:12px;background:#fff;color:var(--text);outline:none;}
+input:focus,select:focus{border-color:var(--primary);}
+.header{padding:16px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+.badge{background:var(--error);color:#fff;border-radius:10px;font-size:10px;padding:1px 5px;position:absolute;top:-4px;right:-4px;}
+.chip{display:inline-flex;align-items:center;padding:6px 12px;border-radius:20px;font-size:13px;border:1.5px solid var(--border);margin:4px;cursor:pointer;background:#fff;}
+.chip.selected{background:var(--primary);color:#fff;border-color:var(--primary);}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:flex-end;}
+.modal-overlay.open{display:flex;}
+.modal-box{background:#fff;border-radius:20px 20px 0 0;padding:24px;width:100%;max-width:430px;margin:0 auto;max-height:90vh;overflow-y:auto;}
+.weather-box{background:#EBF5FB;border-radius:14px;margin:16px;overflow:hidden;}
+.weather-top{padding:14px;display:flex;align-items:center;gap:12px;}
+.weather-tip{background:#D6EAF8;padding:12px;font-size:12px;color:#1A5276;line-height:1.6;}
+.status-badge{display:inline-block;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:600;}
+.status-confirmed{background:#D1FAE5;color:#065F46;}
+.status-cancelled{background:#FEE2E2;color:#991B1B;}
+.status-late{background:#FEF3C7;color:#92400E;}
+.lang-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:32px;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);}
+.lang-photo{width:140px;height:140px;border-radius:70px;border:3px solid var(--primary);object-fit:cover;margin-bottom:20px;}
+.lang-btn{width:100%;padding:16px;border-radius:16px;font-size:16px;font-weight:700;cursor:pointer;margin-bottom:12px;border:2px solid var(--primary);}
+.lang-btn.en{background:var(--primary);color:#fff;}
+.lang-btn.ja{background:transparent;color:var(--primary);}
+.music-btn{position:fixed;bottom:80px;left:20px;z-index:99;background:rgba(201,116,143,0.9);border:none;border-radius:30px;padding:8px 14px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(0,0,0,0.2);}
+.day-slot{padding:8px 14px;border:1.5px solid var(--border);border-radius:10px;margin:4px;cursor:pointer;font-size:13px;display:inline-block;}
+.day-slot.selected{background:var(--primary);color:#fff;border-color:var(--primary);}
+.day-slot.disabled{opacity:0.4;cursor:not-allowed;background:#f3f4f6;}
+.time-slot{padding:8px 16px;border:1.5px solid var(--border);border-radius:10px;margin:4px;cursor:pointer;font-size:13px;display:inline-block;}
+.time-slot.selected{background:var(--primary);color:#fff;border-color:var(--primary);}
+.time-slot.disabled{opacity:0.4;cursor:not-allowed;}
+.notif-item{padding:12px;border-bottom:1px solid var(--border);font-size:13px;}
+.service-card{background:#fff;border-radius:14px;padding:14px;margin:8px 16px;border:1px solid var(--border);}
+.remember-row{display:flex;align-items:center;gap:8px;margin-bottom:16px;cursor:pointer;}
+.checkbox{width:20px;height:20px;border:2px solid var(--primary);border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.checkbox.checked{background:var(--primary);}
+audio{display:none;}
+@media(prefers-color-scheme:light){body{background:#FDF5F7;}}
+.scroll-content{overflow-y:auto;}
+</style>
+</head>
+<body>
+
+<!-- LANG SCREEN -->
+<div id="lang-screen" class="lang-screen">
+  <img src="https://images.unsplash.com/photo-1560066984-138dadb4c035?w=300" class="lang-photo" alt="Bebelle">
+  <h1 style="color:#fff;font-size:32px;font-weight:800;margin-bottom:4px;">Bebelle</h1>
+  <p style="color:var(--primary);font-size:14px;letter-spacing:3px;margin-bottom:32px;">HAIR SALON</p>
+  <button class="lang-btn en" onclick="setLang('en')">English</button>
+  <button class="lang-btn ja" onclick="setLang('ja')">日本語</button>
+</div>
+
+<!-- MAIN APP -->
+<div id="app" style="display:none;">
+
+  <!-- AUTH SCREEN -->
+  <div id="auth-screen" class="screen active">
+    <div style="padding:40px 24px;">
+      <div style="text-align:center;margin-bottom:32px;">
+        <img src="https://images.unsplash.com/photo-1560066984-138dadb4c035?w=200" style="width:80px;height:80px;border-radius:40px;border:2px solid var(--primary);object-fit:cover;">
+        <h2 style="margin-top:12px;color:var(--text);" id="auth-title">Login</h2>
+      </div>
+      <div id="auth-form"></div>
+      <div id="auth-toggle" style="text-align:center;margin-top:8px;color:var(--primary);cursor:pointer;font-size:14px;"></div>
+    </div>
+  </div>
+
+  <!-- RESERVATIONS SCREEN -->
+  <div id="res-screen" class="screen">
+    <div class="header">
+      <span style="font-size:17px;font-weight:700;" id="res-title">Reservations</span>
+      <button onclick="showBookModal()" style="background:var(--primary);color:#fff;border:none;border-radius:20px;padding:6px 16px;font-size:13px;font-weight:600;cursor:pointer;">+ <span id="book-btn-text">Book</span></button>
+    </div>
+    <div id="weather-widget"></div>
+    <div id="my-appointments"></div>
+  </div>
+
+  <!-- SERVICES SCREEN -->
+  <div id="svc-screen" class="screen">
+    <div class="header"><span style="font-size:17px;font-weight:700;" id="svc-title">Menu</span></div>
+    <div id="services-list"></div>
+  </div>
+
+  <!-- ABOUT SCREEN -->
+  <div id="about-screen" class="screen">
+    <div id="about-content"></div>
+  </div>
+
+  <!-- ADMIN SCREEN -->
+  <div id="admin-screen" class="screen">
+    <div class="header"><span style="font-size:17px;font-weight:700;" id="admin-title">Admin Panel</span></div>
+    <div id="admin-content"></div>
+  </div>
+
+  <!-- TAB BAR -->
+  <div class="tab-bar" id="tab-bar"></div>
+
+  <!-- MUSIC -->
+  <button class="music-btn" id="music-btn" onclick="toggleMusic()" style="display:none;">
+    <span id="music-icon">♪</span> <span id="music-label">Music</span>
+  </button>
+  <audio id="audio-player" loop>
+    <source src="https://www.dropbox.com/scl/fi/w0tcgwgj1h4k9gcw7aaeo/RAINING-IN-Lofi-HipHop.mp3?rlkey=t71rk52la53oivr7iylg47r37&st=fgtzar8n&dl=1" type="audio/mpeg">
+  </audio>
+
+  <!-- BOOK MODAL -->
+  <div class="modal-overlay" id="book-modal">
+    <div class="modal-box">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <h3 id="book-modal-title">Book Appointment</h3>
+        <button onclick="closeModal('book-modal')" style="border:none;background:none;font-size:22px;cursor:pointer;">×</button>
+      </div>
+      <div id="book-form"></div>
+    </div>
+  </div>
+
+  <!-- MANAGE MODAL -->
+  <div class="modal-overlay" id="manage-modal">
+    <div class="modal-box">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <h3 id="manage-modal-title">Manage</h3>
+        <button onclick="closeModal('manage-modal')" style="border:none;background:none;font-size:22px;cursor:pointer;">×</button>
+      </div>
+      <div id="manage-form"></div>
+    </div>
+  </div>
+
+  <!-- NOTIF MODAL -->
+  <div class="modal-overlay" id="notif-modal">
+    <div class="modal-box">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <h3 id="notif-title">Notifications</h3>
+        <button onclick="closeModal('notif-modal')" style="border:none;background:none;font-size:22px;cursor:pointer;">×</button>
+      </div>
+      <div id="notif-list"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ============ CONFIG ============
+var _B='https://api.airtable.com/v0/app5hrql36OKNfWvI/';
+var _K='Bearer patrBX7nDs5CywQRA.7c6a8fb5a324951f46b2f9f74f39909770be888e3e04bb549f7a62c2562a2f26';
+var ADMIN_ID='fumiko';
+var ADMIN_PASS='fumiko1425';
+var PAYPAL_ME='https://paypal.me/martinovoamena/';
+var WEATHER_LAT=24.3327711;
+var WEATHER_LON=124.173763;
+var HORARIO={1:{a:9,c:19},2:{a:9,c:19},3:{a:9,c:19},4:{a:9,c:19},5:{a:9,c:19},6:{a:9,c:18},0:{a:10,c:17}};
+
+// ============ STATE ============
+var state={
+  lang:null,user:null,
+  services:[],reservations:[],users:[],salonCfg:{},closedDays:[],
+  adminNotifs:[],
+  currentTab:'res',
+  bookStep:1,bookDate:null,bookTime:null,bookServices:[],bookPayment:'cash',
+  manageRes:null,
+  isLogin:true,rememberMe:false,
+  adminTab:'reservations'
+};
+
+// ============ TRANSLATIONS ============
+var T={
+  en:{
+    selectLang:'Choose Language',english:'English',japanese:'日本語',
+    login:'Login',register:'Create Account',username:'Username',password:'Password',
+    confirmPass:'Confirm Password',name:'Full Name',phone:'Phone',
+    loginBtn:'Login',registerBtn:'Register',
+    noAccount:"Don't have an account? Register",hasAccount:'Already have an account? Login',
+    reservations:'Reservations',services:'Menu',about:'About',admin:'Admin',
+    selectDate:'Select Date',selectTime:'Select Time',
+    selectService:'Select Services (multiple)',myAppointments:'My Appointments',
+    noAppointments:'No appointments yet',total:'Total',
+    bookBtn:'Confirm Booking',bookTitle:'Book Appointment',summary:'Summary',
+    cash:'Cash',online:'Pay with PayPal',payment:'Payment Method',
+    cancel:'Cancel Appointment',reschedule:'Reschedule',manage:'Manage Appointment',
+    ourServices:'Our Menu',aboutUs:'About Us',history:'Our Story',
+    hours:'Business Hours',contact:'Contact',followUs:'Follow Us',logout:'Logout',
+    adminPanel:'Admin Panel',addService:'Add Service',editService:'Edit',
+    deleteService:'Delete',allReservations:'All Reservations',
+    serviceName:'Service Name',servicePrice:'Price (JPY)',serviceDuration:'Duration (min)',
+    serviceDesc:'Description',save:'Save',min:'min',
+    totalDuration:'Total Duration',selectedServices:'Selected',
+    invalidLogin:'Invalid username or password',passNoMatch:'Passwords do not match',
+    fillAll:'Please fill in all fields',bookSuccess:'Appointment booked!',
+    cancelSuccess:'Appointment cancelled',cancelConfirm:'Cancel this appointment?',
+    cancelWarning:'This appointment is in less than 24 hours. A 500 JPY fee will be charged at your next visit.',
+    yes:'Yes',no:'No',client:'Client',noServices:'Please select at least one service',
+    mon:'Mon',tue:'Tue',wed:'Wed',thu:'Thu',fri:'Fri',sat:'Sat',sun:'Sun',
+    historyText:'Bebelle Hair Salon is your cozy escape for beautiful hair. Our expert stylists bring Japanese precision and warmth to every treatment.',
+    addressText:'204-100 Maezato, Ishigaki, Okinawa 907-0002, Japan',
+    phoneText:'Contact via Instagram or Facebook',
+    mondayFriday:'Monday - Friday',saturday:'Saturday',sunday:'Sunday',
+    userExists:'Username already taken',
+    weatherLoading:'Loading weather...',
+    cancelFee:'Note: A 500 JPY fee applies for cancellations within 24 hours.',
+    lateCancelBadge:'⚠️ LATE CANCEL — Collect 500 JPY',lateCancelledStatus:'Late Cancelled',
+    adminNewBooking:'New booking:',adminCancelled:'Cancellation:',adminOnlinePayment:'Online payment:',
+    closedDays:'Closed Days',addClosedDay:'Mark Day Closed',salonConfig:'Salon Config',
+    configuration:'Configuration',notifications:'Notifications',clearAll:'Clear All',
+    noNotifications:'No notifications',confirmDelete:'Delete this?',
+    rememberMe:'Remember me'
+  },
+  ja:{
+    selectLang:'言語を選択',english:'English',japanese:'日本語',
+    login:'ログイン',register:'アカウント作成',username:'ユーザー名',password:'パスワード',
+    confirmPass:'パスワード確認',name:'お名前',phone:'電話番号',
+    loginBtn:'ログイン',registerBtn:'登録する',
+    noAccount:'アカウントをお持ちでない方はこちら',hasAccount:'すでにアカウントをお持ちの方はこちら',
+    reservations:'予約',services:'メニュー',about:'店舗情報',admin:'管理',
+    selectDate:'日付を選択',selectTime:'時間を選択',
+    selectService:'メニューを選択（複数可）',myAppointments:'予約一覧',
+    noAppointments:'予約がありません',total:'合計',
+    bookBtn:'予約を確定する',bookTitle:'予約する',summary:'予約内容',
+    cash:'現金',online:'PayPalで支払う',payment:'支払い方法',
+    cancel:'キャンセル',reschedule:'変更する',manage:'予約管理',
+    ourServices:'メニュー一覧',aboutUs:'店舗情報',history:'私たちについて',
+    hours:'営業時間',contact:'お問い合わせ',followUs:'フォローする',logout:'ログアウト',
+    adminPanel:'管理パネル',addService:'メニュー追加',editService:'編集',
+    deleteService:'削除',allReservations:'全予約',
+    serviceName:'メニュー名',servicePrice:'料金（JPY）',serviceDuration:'所要時間（分）',
+    serviceDesc:'説明',save:'保存',min:'分',
+    totalDuration:'合計時間',selectedServices:'選択中',
+    invalidLogin:'ユーザー名またはパスワードが違います',passNoMatch:'パスワードが一致しません',
+    fillAll:'全ての項目を入力してください',bookSuccess:'予約が完了しました！',
+    cancelSuccess:'予約をキャンセルしました',cancelConfirm:'この予約をキャンセルしますか？',
+    cancelWarning:'この予約まで24時間未満です。次回来店時に500円のキャンセル料が発生します。',
+    yes:'はい',no:'いいえ',client:'お客様',noServices:'メニューを選択してください',
+    mon:'月',tue:'火',wed:'水',thu:'木',fri:'金',sat:'土',sun:'日',
+    historyText:'Bebelle Hair Salonは、美しい髪を提供するサロンです。経験豊富なスタイリストが日本の技術と温かさで最高の体験をご提供します。',
+    addressText:'〒907-0002 沖縄県石垣市前里204-100',
+    phoneText:'InstagramまたはFacebookよりお問い合わせください',
+    mondayFriday:'月曜〜金曜',saturday:'土曜',sunday:'日曜',
+    userExists:'そのユーザー名はすでに使われています',
+    weatherLoading:'天気を読み込み中...',
+    cancelFee:'注意：24時間以内のキャンセルは500円の手数料が発生します。',
+    lateCancelBadge:'⚠️ 遅延キャンセル — 500円を受け取ること',lateCancelledStatus:'遅延キャンセル',
+    adminNewBooking:'新しい予約:',adminCancelled:'キャンセル:',adminOnlinePayment:'オンライン支払い:',
+    closedDays:'休業日',addClosedDay:'休業日を設定',salonConfig:'サロン設定',
+    configuration:'設定',notifications:'通知',clearAll:'全削除',
+    noNotifications:'通知なし',confirmDelete:'削除しますか？',
+    rememberMe:'ログイン状態を保持'
+  }
+};
+function t(key){return (T[state.lang||'en']||T.en)[key]||key;}
+
+// ============ AIRTABLE ============
+function _getAll(table,cb){
+  fetch(_B+encodeURIComponent(table),{headers:{Authorization:_K}})
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(d.error){cb(new Error(d.error),null);return;}
+      cb(null,(d.records||[]).map(function(r){
+        var f=r.fields||{};f._id=r.id;f.id=f.id||r.id;
+        if(f.date)f.date=f.date.substring(0,10);
+        return f;
+      }));
+    }).catch(function(e){cb(e,null);});
+}
+function _post(table,fields){
+  return fetch(_B+encodeURIComponent(table),{method:'POST',headers:{Authorization:_K,'Content-Type':'application/json'},body:JSON.stringify({fields:fields})}).then(function(r){return r.json();});
+}
+function _patch(table,rid,fields){
+  return fetch(_B+encodeURIComponent(table)+'/'+rid,{method:'PATCH',headers:{Authorization:_K,'Content-Type':'application/json'},body:JSON.stringify({fields:fields})}).then(function(r){return r.json();});
+}
+function _destroy(table,rid){
+  return fetch(_B+encodeURIComponent(table)+'/'+rid,{method:'DELETE',headers:{Authorization:_K}}).then(function(r){return r.json();});
+}
+
+// ============ HELPERS ============
+function endTime(start,mins){
+  var h=parseInt(start.split(':')[0]),m=parseInt(start.split(':')[1]);
+  var tot=h*60+m+parseInt(mins);
+  return String(Math.floor(tot/60)).padStart(2,'0')+':'+String(tot%60).padStart(2,'0');
+}
+function isWithin24h(dateStr,timeStr){
+  var appt=new Date(dateStr+'T'+timeStr);
+  var now=new Date();
+  var diff=appt.getTime()-now.getTime();
+  return diff>0&&diff<24*60*60*1000;
+}
+function isCancelled(status){return status==='cancelled'||status==='cancelled_late';}
+function getHairTip(code,temp,lang){
+  var ja=lang==='ja';
+  if(temp>=30)return ja?'とても暑いです！UVカットスプレーでヘアケアをしましょう。':'Very hot! Use UV protection spray to shield your hair from sun damage.';
+  if(temp>=26)return ja?'暑い日が続いています。保湿ヘアミストがオススメです。':'Hot and sunny! Keep hair hydrated with a leave-in moisture mist.';
+  if(code>=200&&code<600)return ja?'雨の日は湿気で髪が広がります。洗い流さないトリートメントでまとめましょう。':'Rainy day! Humidity causes frizz — use a leave-in conditioner to tame your hair.';
+  if(temp<18)return ja?'涼しい季節です。頭皮マッサージで血行を促進しましょう！':'Cool day! Great time for a head spa treatment.';
+  return ja?'今日は良いコンディションです。サロンでのトリートメントにぴったり！':'Perfect salon weather today! Great day for a relaxing treatment.';
+}
+function wicon(c){if(c===0)return'☀️';if(c<=2)return'⛅';if(c<=49)return'🌫️';if(c<=69)return'🌧️';if(c<=79)return'❄️';if(c<=99)return'⛈️';return'🌤️';}
+function wdesc(c,ja){if(c===0)return ja?'快晴':'Clear';if(c<=2)return ja?'一部曇り':'Partly cloudy';if(c<=49)return ja?'霧':'Foggy';if(c<=69)return ja?'雨':'Rainy';if(c<=79)return ja?'雪':'Snow';if(c<=99)return ja?'雷雨':'Thunderstorm';return ja?'曇り':'Cloudy';}
+function pushNotif(msg){
+  var now=Date.now();
+  state.adminNotifs=state.adminNotifs.filter(function(n){return now-parseInt(n.id)<24*60*60*1000;});
+  state.adminNotifs.unshift({id:now.toString(),msg:msg,time:new Date().toLocaleTimeString()});
+  renderTabBar();
+}
+function genId(){return 'res_'+Math.random().toString(36).substr(2,8)+'_'+Math.random().toString(36).substr(2,6);}
+
+// ============ INIT ============
+function setLang(lang){
+  state.lang=lang;
+  localStorage.setItem('bebelle_lang',lang);
+  document.getElementById('lang-screen').style.display='none';
+  document.getElementById('app').style.display='block';
+  // check saved user
+  var saved=localStorage.getItem('bebelle_user');
+  if(saved){try{state.user=JSON.parse(saved);}catch(e){}}
+  if(state.user){
+    loadData();
+  } else {
+    showAuth();
+  }
+}
+
+window.onload=function(){
+  var lang=localStorage.getItem('bebelle_lang');
+  var saved=localStorage.getItem('bebelle_user');
+  if(lang){
+    state.lang=lang;
+    document.getElementById('lang-screen').style.display='none';
+    document.getElementById('app').style.display='block';
+    if(saved){try{state.user=JSON.parse(saved);}catch(e){}}
+    if(state.user){loadData();}
+    else{showAuth();}
+  }
+};
+
+function loadData(){
+  renderTabBar();
+  renderScreen();
+  _getAll('services',function(e,d){if(!e){state.services=d||[];renderScreen();}});
+  _getAll('reservations',function(e,d){if(!e){state.reservations=d||[];renderScreen();}});
+  _getAll('salon_config',function(e,d){if(!e&&d&&d[0]){state.salonCfg=d[0];}renderScreen();});
+  _getAll('closed_days',function(e,d){if(!e){state.closedDays=d||[];}});
+  loadWeather();
+}
+
+function loadWeather(){
+  fetch('https://api.open-meteo.com/v1/forecast?latitude='+WEATHER_LAT+'&longitude='+WEATHER_LON+'&current=temperature_2m,weathercode,windspeed_10m,relativehumidity_2m&timezone=Asia%2FTokyo')
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(d&&d.current){
+        state.weather={temp:Math.round(d.current.temperature_2m),code:d.current.weathercode,wind:Math.round(d.current.windspeed_10m),humidity:d.current.relativehumidity_2m};
+        renderWeather();
+      }
+    }).catch(function(){});
+}
+
+// ============ AUTH ============
+function showAuth(){
+  showScreen('auth-screen');
+  renderAuth();
+}
+
+function renderAuth(){
+  var isLogin=state.isLogin;
+  var tl=document.getElementById('auth-title');
+  if(tl)tl.textContent=isLogin?t('login'):t('register');
+  var toggle=document.getElementById('auth-toggle');
+  if(toggle)toggle.textContent=isLogin?t('noAccount'):t('hasAccount');
+  var form=document.getElementById('auth-form');
+  if(!form)return;
+  var html='';
+  html+='<input type="text" id="f-username" placeholder="'+t('username')+'" autocapitalize="none">';
+  html+='<input type="password" id="f-password" placeholder="'+t('password')+'">';
+  if(!isLogin){
+    html+='<input type="password" id="f-confirm" placeholder="'+t('confirmPass')+'">';
+    html+='<input type="text" id="f-name" placeholder="'+t('name')+'">';
+    html+='<input type="tel" id="f-phone" placeholder="'+t('phone')+'">';
+  }
+  html+='<div class="remember-row" onclick="toggleRemember()">';
+  html+='<div class="checkbox'+(state.rememberMe?' checked':'')+'">'+( state.rememberMe?'<svg viewBox="0 0 24 24" width="12" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>':'' )+'</div>';
+  html+='<span style="font-size:13px;color:var(--sub)">'+t('rememberMe')+'</span></div>';
+  html+='<button class="btn btn-primary" onclick="doAuth()">'+(isLogin?t('loginBtn'):t('registerBtn'))+'</button>';
+  form.innerHTML=html;
+}
+
+function toggleRemember(){state.rememberMe=!state.rememberMe;renderAuth();}
+
+function doAuth(){
+  var username=(document.getElementById('f-username')||{}).value||'';
+  var password=(document.getElementById('f-password')||{}).value||'';
+  username=username.trim().toLowerCase();
+  if(!username||!password){alert(t('fillAll'));return;}
+  if(state.isLogin){
+    // admin check
+    if(username===ADMIN_ID&&password.toLowerCase()===ADMIN_PASS.toLowerCase()){
+      var u={username:ADMIN_ID,name:'Fumiko',isAdmin:true};
+      loginUser(u);return;
+    }
+    _getAll('users',function(e,d){
+      if(e){alert(t('invalidLogin'));return;}
+      var found=(d||[]).find(function(x){return x.username===username&&x.password===password;});
+      if(!found){alert(t('invalidLogin'));return;}
+      loginUser(found);
+    });
+  } else {
+    var confirm=(document.getElementById('f-confirm')||{}).value||'';
+    var name=(document.getElementById('f-name')||{}).value||'';
+    var phone=(document.getElementById('f-phone')||{}).value||'';
+    if(!confirm||!name||!phone){alert(t('fillAll'));return;}
+    if(password!==confirm){alert(t('passNoMatch'));return;}
+    _getAll('users',function(e,d){
+      if((d||[]).find(function(x){return x.username===username;})){alert(t('userExists'));return;}
+      var nu={username:username,password:password,name:name,phone:phone};
+      _post('users',nu).then(function(){loginUser(nu);}).catch(function(){alert(t('fillAll'));});
+    });
+  }
+}
+
+function loginUser(u){
+  state.user=u;
+  if(state.rememberMe)localStorage.setItem('bebelle_user',JSON.stringify(u));
+  loadData();
+  document.getElementById('music-btn').style.display='flex';
+}
+
+function logout(){
+  state.user=null;
+  localStorage.removeItem('bebelle_user');
+  showScreen('auth-screen');
+  renderAuth();
+  document.getElementById('music-btn').style.display='none';
+  var audio=document.getElementById('audio-player');
+  audio.pause();
+}
+
+// ============ NAVIGATION ============
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  var el=document.getElementById(id);
+  if(el)el.classList.add('active');
+}
+
+function switchTab(tab){
+  state.currentTab=tab;
+  renderTabBar();
+  if(tab==='res'){showScreen('res-screen');renderReservations();}
+  else if(tab==='svc'){showScreen('svc-screen');renderServices();}
+  else if(tab==='about'){showScreen('about-screen');renderAbout();}
+  else if(tab==='admin'){showScreen('admin-screen');renderAdmin();}
+}
+
+function renderTabBar(){
+  var isAdmin=state.user&&state.user.username===ADMIN_ID;
+  var cur=state.currentTab;
+  var notifCount=state.adminNotifs.length;
+  var html='';
+  html+='<button class="tab-btn'+(cur==='res'?' active':'')+'" onclick="switchTab(\'res\')">';
+  html+='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
+  html+=t('reservations')+'</button>';
+  html+='<button class="tab-btn'+(cur==='svc'?' active':'')+'" onclick="switchTab(\'svc\')">';
+  html+='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>';
+  html+=t('services')+'</button>';
+  html+='<button class="tab-btn'+(cur==='about'?' active':'')+'" onclick="switchTab(\'about\')">';
+  html+='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
+  html+=t('about')+'</button>';
+  if(isAdmin){
+    html+='<button class="tab-btn'+(cur==='admin'?' active':'')+'" onclick="switchTab(\'admin\')" style="position:relative">';
+    html+='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>';
+    if(notifCount>0)html+='<span class="badge">'+notifCount+'</span>';
+    html+=t('admin')+'</button>';
+  }
+  document.getElementById('tab-bar').innerHTML=html;
+}
+
+function renderScreen(){
+  var cur=state.currentTab;
+  if(cur==='res')renderReservations();
+  else if(cur==='svc')renderServices();
+  else if(cur==='about')renderAbout();
+  else if(cur==='admin')renderAdmin();
+}
+
+// ============ WEATHER ============
+function renderWeather(){
+  var w=state.weather;
+  if(!w)return;
+  var el=document.getElementById('weather-widget');
+  if(!el)return;
+  el.innerHTML='<div class="weather-box"><div class="weather-top"><span style="font-size:36px">'+wicon(w.code)+'</span><div style="flex:1"><div style="display:flex;align-items:baseline;gap:6px"><span style="font-size:26px;font-weight:bold">'+w.temp+'°C</span><span style="font-size:13px;color:var(--sub)">'+wdesc(w.code,state.lang==='ja')+'</span></div><div style="font-size:11px;color:var(--sub);margin-top:2px">💨 '+w.wind+'km/h  💧 '+w.humidity+'%  Ishigaki</div></div></div><div class="weather-tip">'+getHairTip(w.code,w.temp,state.lang)+'</div></div>';
+}
+
+// ============ RESERVATIONS ============
+function renderReservations(){
+  document.getElementById('res-title').textContent=t('reservations');
+  document.getElementById('book-btn-text').textContent=t('bookTitle');
+  renderWeather();
+  var u=state.user;
+  if(!u)return;
+  var myRes=state.reservations.filter(function(r){return r.username&&r.username.toLowerCase()===u.username.toLowerCase();});
+  myRes=myRes.sort(function(a,b){
+    var da=new Date((a.date||'2000-01-01')+'T'+(a.time||'00:00'));
+    var db=new Date((b.date||'2000-01-01')+'T'+(b.time||'00:00'));
+    return da-db;
+  });
+  var el=document.getElementById('my-appointments');
+  if(!el)return;
+  var html='<div style="padding:16px 16px 4px;font-size:13px;font-weight:600;color:var(--sub)">'+t('myAppointments')+'</div>';
+  if(myRes.length===0){
+    html+='<div class="card" style="text-align:center;color:var(--sub);padding:32px">'+t('noAppointments')+'</div>';
+  } else {
+    myRes.forEach(function(r){
+      var cancelled=isCancelled(r.status);
+      var statusClass=r.status==='confirmed'?'status-confirmed':r.status==='cancelled_late'?'status-late':'status-cancelled';
+      html+='<div class="card" style="opacity:'+(cancelled?'0.7':'1')+'">';
+      html+='<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">';
+      html+='<div><div style="font-weight:700;font-size:15px">'+( r.date||'' )+'</div><div style="color:var(--sub);font-size:13px">'+( r.time||'' )+' - '+(r.endTime||'')+'</div></div>';
+      html+='<span class="status-badge '+statusClass+'">'+( r.status||'' )+'</span></div>';
+      html+='<div style="font-size:13px;color:var(--sub);margin-bottom:8px">'+(r.serviceNames||'')+'</div>';
+      html+='<div style="display:flex;justify-content:space-between;align-items:center">';
+      html+='<span style="font-weight:700;color:var(--primary)">¥'+(r.totalPrice||0)+'</span>';
+      if(!cancelled){
+        html+='<button onclick="openManage(\''+r._id+'\')" style="background:var(--accent);border:none;border-radius:10px;padding:6px 14px;font-size:12px;font-weight:600;color:var(--primary);cursor:pointer">'+t('manage')+'</button>';
+      }
+      html+='</div></div>';
+    });
+  }
+  el.innerHTML=html;
+}
+
+function openManage(id){
+  var r=state.reservations.find(function(x){return x._id===id;});
+  if(!r)return;
+  state.manageRes=r;
+  document.getElementById('manage-modal-title').textContent=t('manage');
+  var within24=isWithin24h(r.date,r.time);
+  var html='';
+  html+='<div style="margin-bottom:16px">';
+  html+='<div style="font-weight:700">'+r.date+' '+r.time+'</div>';
+  html+='<div style="color:var(--sub);font-size:13px;margin-top:4px">'+r.serviceNames+'</div>';
+  html+='<div style="font-weight:700;color:var(--primary);margin-top:8px">¥'+r.totalPrice+'</div>';
+  html+='</div>';
+  if(within24){
+    html+='<div style="background:#FEF3C7;border-radius:10px;padding:12px;margin-bottom:12px;font-size:13px;color:#92400E">'+t('cancelWarning')+'</div>';
+  }
+  html+='<button class="btn btn-danger" onclick="doCancel(\''+r._id+'\','+within24+')">'+t('cancel')+'</button>';
+  html+='<button class="btn btn-secondary" onclick="closeModal(\'manage-modal\')">'+t('no')+'</button>';
+  document.getElementById('manage-form').innerHTML=html;
+  openModal('manage-modal');
+}
+
+function doCancel(id, isLate){
+  var r=state.reservations.find(function(x){return x._id===id;});
+  if(!r)return;
+  var newStatus=isLate?'cancelled_late':'cancelled';
+  _patch('reservations',r._id,{status:newStatus}).then(function(){
+    r.status=newStatus;
+    closeModal('manage-modal');
+    pushNotif((isLate?t('lateCancelBadge')+' ':'')+(t('adminCancelled')||'Cancellation:')+' '+(r.clientName||r.username||''));
+    renderReservations();
+    alert(t('cancelSuccess'));
+  });
+}
+
+// ============ BOOK MODAL ============
+function showBookModal(){
+  state.bookStep=1;state.bookDate=null;state.bookTime=null;state.bookServices=[];state.bookPayment='cash';
+  renderBookForm();
+  openModal('book-modal');
+}
+
+function renderBookForm(){
+  document.getElementById('book-modal-title').textContent=t('bookTitle');
+  var el=document.getElementById('book-form');
+  if(!el)return;
+  var html='';
+  if(state.bookStep===1){
+    // Date selection - next 30 days
+    html+='<p style="font-weight:600;margin-bottom:12px">'+t('selectDate')+'</p>';
+    html+='<div style="display:flex;flex-wrap:wrap;">';
+    var today=new Date();
+    for(var i=1;i<=30;i++){
+      var d=new Date(today);d.setDate(today.getDate()+i);
+      var dow=d.getDay();
+      var ds=d.toISOString().substring(0,10);
+      var h=HORARIO[dow];
+      var closed=state.closedDays.find(function(c){return c.date===ds;});
+      var disabled=!h||!!closed;
+      var days=[t('sun'),t('mon'),t('tue'),t('wed'),t('thu'),t('fri'),t('sat')];
+      var sel=state.bookDate===ds;
+      html+='<div class="day-slot'+(sel?' selected':'')+(disabled?' disabled':'')+'" onclick="'+(disabled?'':'selectDate(\''+ds+'\')')+'">';
+      html+='<div style="font-size:11px;opacity:0.7">'+days[dow]+'</div>';
+      html+='<div style="font-weight:700">'+d.getDate()+'</div>';
+      html+='<div style="font-size:10px">'+(disabled?'✕':(h.a+'-'+h.c))+'</div>';
+      html+='</div>';
+    }
+    html+='</div>';
+    if(state.bookDate){
+      html+='<button class="btn btn-primary" style="margin-top:16px" onclick="state.bookStep=2;renderBookForm()">Next →</button>';
+    }
+  } else if(state.bookStep===2){
+    // Service selection
+    html+='<p style="font-weight:600;margin-bottom:12px">'+t('selectService')+'</p>';
+    html+='<div style="display:flex;flex-wrap:wrap;">';
+    state.services.forEach(function(s){
+      var sel=state.bookServices.find(function(x){return x._id===s._id;});
+      html+='<div class="chip'+(sel?' selected':'')+'" onclick="toggleSvc(\''+s._id+'\')">';
+      html+=s.name+' (¥'+s.price+')';
+      html+='</div>';
+    });
+    html+='</div>';
+    var totP=state.bookServices.reduce(function(a,s){return a+parseInt(s.price||0);},0);
+    var totD=state.bookServices.reduce(function(a,s){return a+parseInt(s.duration||0);},0);
+    if(state.bookServices.length>0){
+      html+='<div style="margin-top:12px;padding:12px;background:#FDF5F7;border-radius:10px;font-size:13px">';
+      html+=t('total')+': ¥'+totP+' | '+totD+t('min');
+      html+='</div>';
+    }
+    html+='<div style="display:flex;gap:8px;margin-top:16px">';
+    html+='<button class="btn btn-secondary" style="margin-bottom:0" onclick="state.bookStep=1;renderBookForm()">← Back</button>';
+    if(state.bookServices.length>0){
+      html+='<button class="btn btn-primary" style="margin-bottom:0" onclick="state.bookStep=3;renderBookForm()">Next →</button>';
+    }
+    html+='</div>';
+  } else if(state.bookStep===3){
+    // Time selection
+    var dow=new Date(state.bookDate+'T12:00:00').getDay();
+    var h=HORARIO[dow];
+    var totD=state.bookServices.reduce(function(a,s){return a+parseInt(s.duration||0);},0);
+    html+='<p style="font-weight:600;margin-bottom:12px">'+t('selectTime')+'</p>';
+    html+='<div style="display:flex;flex-wrap:wrap;">';
+    for(var hr=h.a;hr<h.c;hr++){
+      for(var mn=0;mn<60;mn+=30){
+        var ts=String(hr).padStart(2,'0')+':'+String(mn).padStart(2,'0');
+        var te=endTime(ts,totD);
+        if(parseInt(te.split(':')[0])>h.c||(parseInt(te.split(':')[0])===h.c&&parseInt(te.split(':')[1])>0))continue;
+        // check conflicts
+        var conflict=state.reservations.filter(function(r){return r.date===state.bookDate&&r.status==='confirmed';}).some(function(r){
+          var rs=r.time,re=r.endTime;
+          return ts<re&&te>rs;
+        });
+        var sel=state.bookTime===ts;
+        html+='<div class="time-slot'+(sel?' selected':'')+(conflict?' disabled':'')+'" onclick="'+(conflict?'':'selectTime(\''+ts+'\')')+'">';
+        html+=ts+(conflict?' ✕':'');
+        html+='</div>';
+      }
+    }
+    html+='</div>';
+    html+='<div style="display:flex;gap:8px;margin-top:16px">';
+    html+='<button class="btn btn-secondary" style="margin-bottom:0" onclick="state.bookStep=2;renderBookForm()">← Back</button>';
+    if(state.bookTime){
+      html+='<button class="btn btn-primary" style="margin-bottom:0" onclick="state.bookStep=4;renderBookForm()">Next →</button>';
+    }
+    html+='</div>';
+  } else if(state.bookStep===4){
+    // Payment & confirm
+    var totP=state.bookServices.reduce(function(a,s){return a+parseInt(s.price||0);},0);
+    var totD=state.bookServices.reduce(function(a,s){return a+parseInt(s.duration||0);},0);
+    html+='<p style="font-weight:600;margin-bottom:12px">'+t('summary')+'</p>';
+    html+='<div style="background:#FDF5F7;border-radius:12px;padding:14px;margin-bottom:16px;font-size:14px">';
+    html+='<div style="margin-bottom:6px">📅 '+state.bookDate+'</div>';
+    html+='<div style="margin-bottom:6px">🕐 '+state.bookTime+' - '+endTime(state.bookTime,totD)+'</div>';
+    html+='<div style="margin-bottom:6px">✂️ '+state.bookServices.map(function(s){return s.name;}).join(', ')+'</div>';
+    html+='<div style="font-weight:700;color:var(--primary)">¥'+totP+' / '+totD+t('min')+'</div>';
+    html+='</div>';
+    html+='<p style="font-weight:600;margin-bottom:10px">'+t('payment')+'</p>';
+    html+='<div style="display:flex;gap:8px;margin-bottom:16px">';
+    html+='<div class="chip'+(state.bookPayment==='cash'?' selected':'')+'" onclick="state.bookPayment=\'cash\';renderBookForm()">💴 '+t('cash')+'</div>';
+    html+='<div class="chip'+(state.bookPayment==='online'?' selected':'')+'" onclick="state.bookPayment=\'online\';renderBookForm()">💳 '+t('online')+'</div>';
+    html+='</div>';
+    html+='<div style="display:flex;gap:8px">';
+    html+='<button class="btn btn-secondary" style="margin-bottom:0" onclick="state.bookStep=3;renderBookForm()">← Back</button>';
+    html+='<button class="btn btn-primary" style="margin-bottom:0" onclick="doBook()">'+t('bookBtn')+'</button>';
+    html+='</div>';
+  }
+  el.innerHTML=html;
+}
+
+function selectDate(d){state.bookDate=d;renderBookForm();}
+function selectTime(t2){state.bookTime=t2;renderBookForm();}
+function toggleSvc(id){
+  var idx=state.bookServices.findIndex(function(x){return x._id===id;});
+  if(idx>=0){state.bookServices.splice(idx,1);}
+  else{var s=state.services.find(function(x){return x._id===id;});if(s)state.bookServices.push(s);}
+  renderBookForm();
+}
+
+function doBook(){
+  var totP=state.bookServices.reduce(function(a,s){return a+parseInt(s.price||0);},0);
+  var totD=state.bookServices.reduce(function(a,s){return a+parseInt(s.duration||0);},0);
+  var et=endTime(state.bookTime,totD);
+  var id=genId();
+  var fields={
+    id:id,clientName:state.user.name||state.user.username,
+    username:state.user.username,date:state.bookDate,time:state.bookTime,
+    endTime:et,status:'confirmed',
+    serviceNames:state.bookServices.map(function(s){return s.name;}).join(', '),
+    totalPrice:totP,totalDuration:totD,
+    payment_method:state.bookPayment,created_at:new Date().toISOString()
+  };
+  _post('reservations',fields).then(function(resp){
+    var f=resp.fields||{};f._id=resp.id;f.id=f.id||resp.id;
+    state.reservations.push(f);
+    closeModal('book-modal');
+    if(state.bookPayment==='online'){
+      var ppUrl=(state.salonCfg&&state.salonCfg.paypal)?state.salonCfg.paypal:PAYPAL_ME;
+      window.open(ppUrl+totP+'JPY','_blank');
+    }
+    pushNotif(t('adminNewBooking')+' '+(state.user.name||state.user.username)+' '+state.bookDate+' '+state.bookTime);
+    renderReservations();
+    alert(t('bookSuccess'));
+  }).catch(function(){alert(t('fillAll'));});
+}
+
+// ============ SERVICES ============
+function renderServices(){
+  document.getElementById('svc-title').textContent=t('ourServices');
+  var el=document.getElementById('services-list');
+  if(!el)return;
+  if(state.services.length===0){
+    el.innerHTML='<div class="card" style="text-align:center;padding:32px;color:var(--sub)">Loading...</div>';
+    return;
+  }
+  var html='';
+  state.services.forEach(function(s){
+    html+='<div class="service-card">';
+    html+='<div style="display:flex;justify-content:space-between;align-items:flex-start">';
+    html+='<div style="flex:1"><div style="font-weight:700;font-size:15px;margin-bottom:4px">'+s.name+'</div>';
+    if(s.description)html+='<div style="font-size:13px;color:var(--sub);margin-bottom:6px">'+s.description+'</div>';
+    html+='<div style="font-size:12px;color:var(--sub)">⏱ '+s.duration+t('min')+'</div></div>';
+    html+='<div style="font-weight:700;color:var(--primary);font-size:16px;margin-left:12px">¥'+s.price+'</div>';
+    html+='</div></div>';
+  });
+  el.innerHTML=html;
+}
+
+// ============ ABOUT ============
+function renderAbout(){
+  var cfg=state.salonCfg||{};
+  var el=document.getElementById('about-content');
+  if(!el)return;
+  var html='';
+  // Photos
+  var photos=[cfg.photo1,cfg.photo2,cfg.photo3,'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400'].filter(Boolean);
+  html+='<div style="display:flex;overflow-x:auto;gap:8px;padding:16px">';
+  photos.slice(0,3).forEach(function(p){
+    html+='<img src="'+p+'" style="width:160px;height:120px;border-radius:12px;object-fit:cover;flex-shrink:0">';
+  });
+  html+='</div>';
+  // About section
+  html+='<div class="card"><h3 style="margin-bottom:8px">'+t('history')+'</h3><p style="font-size:14px;color:var(--sub);line-height:1.6">'+(cfg.history||t('historyText'))+'</p></div>';
+  // Hours
+  html+='<div class="card"><h3 style="margin-bottom:12px">'+t('hours')+'</h3>';
+  html+='<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><span>'+t('mondayFriday')+'</span><span style="font-weight:600">09:00 - 19:00</span></div>';
+  html+='<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><span>'+t('saturday')+'</span><span style="font-weight:600">09:00 - 18:00</span></div>';
+  html+='<div style="display:flex;justify-content:space-between;padding:8px 0"><span>'+t('sunday')+'</span><span style="font-weight:600">10:00 - 17:00</span></div></div>';
+  // Contact
+  html+='<div class="card"><h3 style="margin-bottom:12px">'+t('contact')+'</h3>';
+  html+='<div style="font-size:14px;color:var(--sub);margin-bottom:8px">📍 '+(cfg.address||t('addressText'))+'</div>';
+  if(cfg.instagram)html+='<a href="https://instagram.com/'+cfg.instagram+'" target="_blank" style="display:block;padding:10px;background:#f3f4f6;border-radius:10px;text-decoration:none;color:var(--text);margin-bottom:8px;font-size:14px">📸 Instagram: @'+cfg.instagram+'</a>';
+  if(cfg.facebook)html+='<a href="https://facebook.com/'+cfg.facebook+'" target="_blank" style="display:block;padding:10px;background:#f3f4f6;border-radius:10px;text-decoration:none;color:var(--text);margin-bottom:8px;font-size:14px">👤 Facebook: '+cfg.facebook+'</a>';
+  if(cfg.line)html+='<div style="padding:10px;background:#f3f4f6;border-radius:10px;font-size:14px;margin-bottom:8px">💬 LINE: '+cfg.line+'</div>';
+  html+='</div>';
+  // Logout
+  html+='<div class="card"><button class="btn btn-secondary" onclick="logout()">'+t('logout')+'</button></div>';
+  el.innerHTML=html;
+}
+
+// ============ ADMIN ============
+function renderAdmin(){
+  document.getElementById('admin-title').textContent=t('adminPanel');
+  var el=document.getElementById('admin-content');
+  if(!el)return;
+  var tabs=['reservations','services','config','closed'];
+  var labels=[t('allReservations'),t('services'),t('configuration'),t('closedDays')];
+  var html='<div style="display:flex;overflow-x:auto;padding:12px 16px;gap:8px">';
+  tabs.forEach(function(tab,i){
+    html+='<button onclick="state.adminTab=\''+tab+'\';renderAdmin()" style="flex-shrink:0;padding:8px 16px;border-radius:20px;border:none;font-size:13px;font-weight:600;cursor:pointer;background:'+(state.adminTab===tab?'var(--primary)':'var(--border)')+';color:'+(state.adminTab===tab?'#fff':'var(--text)')+'">'+labels[i]+'</button>';
+  });
+  // Notifications button
+  html+='<button onclick="openNotifs()" style="flex-shrink:0;padding:8px 16px;border-radius:20px;border:none;font-size:13px;font-weight:600;cursor:pointer;background:var(--border);color:var(--text);position:relative">🔔'+(state.adminNotifs.length>0?' ('+state.adminNotifs.length+')':'')+'</button>';
+  html+='</div>';
+
+  if(state.adminTab==='reservations'){
+    var adminRes=state.reservations.filter(function(r){return r.status==='confirmed'||r.status==='cancelled_late';})
+      .sort(function(a,b){return new Date(a.date+'T'+(a.time||'00:00'))-new Date(b.date+'T'+(b.time||'00:00'));});
+    if(adminRes.length===0){
+      html+='<div class="card" style="text-align:center;color:var(--sub);padding:32px">'+t('noAppointments')+'</div>';
+    } else {
+      adminRes.forEach(function(r){
+        var statusClass=r.status==='confirmed'?'status-confirmed':'status-late';
+        html+='<div class="card">';
+        html+='<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">';
+        html+='<div><div style="font-weight:700">'+t('client')+': '+(r.clientName||r.username||'')+'</div>';
+        html+='<div style="color:var(--sub);font-size:13px">'+r.date+' '+r.time+'</div></div>';
+        html+='<span class="status-badge '+statusClass+'">'+r.status+'</span></div>';
+        html+='<div style="font-size:13px;color:var(--sub)">'+r.serviceNames+'</div>';
+        if(r.status==='cancelled_late')html+='<div style="margin-top:8px;padding:8px;background:#FEF3C7;border-radius:8px;font-size:12px;color:#92400E">'+t('lateCancelBadge')+'</div>';
+        html+='<div style="font-weight:700;color:var(--primary);margin-top:8px">¥'+r.totalPrice+'</div>';
+        html+='</div>';
+      });
+    }
+  } else if(state.adminTab==='services'){
+    html+='<div style="padding:0 16px"><button class="btn btn-primary" onclick="openAddService()">+ '+t('addService')+'</button></div>';
+    state.services.forEach(function(s){
+      html+='<div class="service-card"><div style="display:flex;justify-content:space-between;align-items:center">';
+      html+='<div><div style="font-weight:700">'+s.name+'</div><div style="font-size:13px;color:var(--sub)">¥'+s.price+' · '+s.duration+t('min')+'</div></div>';
+      html+='<div style="display:flex;gap:8px">';
+      html+='<button onclick="openEditService(\''+s._id+'\')" style="border:none;background:#EFF6FF;color:#3B82F6;border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer">'+t('editService')+'</button>';
+      html+='<button onclick="deleteService(\''+s._id+'\')" style="border:none;background:#FEE2E2;color:var(--error);border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer">'+t('deleteService')+'</button>';
+      html+='</div></div></div>';
+    });
+  } else if(state.adminTab==='config'){
+    var cfg=state.salonCfg||{};
+    html+='<div style="padding:16px">';
+    html+='<input type="text" id="cfg-ig" placeholder="Instagram" value="'+(cfg.instagram||'')+'">';
+    html+='<input type="text" id="cfg-fb" placeholder="Facebook" value="'+(cfg.facebook||'')+'">';
+    html+='<input type="text" id="cfg-line" placeholder="LINE ID" value="'+(cfg.line||'')+'">';
+    html+='<input type="text" id="cfg-paypal" placeholder="PayPal URL" value="'+(cfg.paypal||'')+'">';
+    html+='<input type="text" id="cfg-phone" placeholder="Phone" value="'+(cfg.phone||'')+'">';
+    html+='<input type="text" id="cfg-addr" placeholder="Address" value="'+(cfg.address||'')+'">';
+    html+='<textarea id="cfg-history" placeholder="Our Story" rows="4" style="resize:none">'+(cfg.history||'')+'</textarea>';
+    html+='<input type="text" id="cfg-p1" placeholder="Photo 1 URL" value="'+(cfg.photo1||'')+'">';
+    html+='<input type="text" id="cfg-p2" placeholder="Photo 2 URL" value="'+(cfg.photo2||'')+'">';
+    html+='<input type="text" id="cfg-p3" placeholder="Photo 3 URL" value="'+(cfg.photo3||'')+'">';
+    html+='<button class="btn btn-primary" onclick="saveConfig()">'+t('save')+'</button>';
+    html+='</div>';
+  } else if(state.adminTab==='closed'){
+    html+='<div style="padding:16px">';
+    html+='<input type="date" id="closed-date" style="margin-bottom:8px">';
+    html+='<input type="text" id="closed-comment" placeholder="Comment (optional)">';
+    html+='<button class="btn btn-primary" onclick="addClosedDay()">+ '+t('addClosedDay')+'</button>';
+    html+='</div>';
+    state.closedDays.forEach(function(cd){
+      html+='<div class="card" style="display:flex;justify-content:space-between;align-items:center">';
+      html+='<div><div style="font-weight:700">'+cd.date+'</div><div style="font-size:13px;color:var(--sub)">'+(cd.comment||'')+'</div></div>';
+      html+='<button onclick="deleteClosedDay(\''+cd._id+'\')" style="border:none;background:#FEE2E2;color:var(--error);border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer">✕</button>';
+      html+='</div>';
+    });
+  }
+  el.innerHTML=html;
+}
+
+function saveConfig(){
+  var fields={
+    instagram:(document.getElementById('cfg-ig')||{}).value||'',
+    facebook:(document.getElementById('cfg-fb')||{}).value||'',
+    line:(document.getElementById('cfg-line')||{}).value||'',
+    paypal:(document.getElementById('cfg-paypal')||{}).value||'',
+    phone:(document.getElementById('cfg-phone')||{}).value||'',
+    address:(document.getElementById('cfg-addr')||{}).value||'',
+    history:(document.getElementById('cfg-history')||{}).value||'',
+    photo1:(document.getElementById('cfg-p1')||{}).value||'',
+    photo2:(document.getElementById('cfg-p2')||{}).value||'',
+    photo3:(document.getElementById('cfg-p3')||{}).value||''
+  };
+  var cfg=state.salonCfg;
+  var promise=cfg&&cfg._id?_patch('salon_config',cfg._id,fields):_post('salon_config',fields);
+  promise.then(function(r){
+    var f=r.fields||{};f._id=r.id;
+    state.salonCfg=f;
+    alert(t('save')+' ✓');
+  });
+}
+
+function addClosedDay(){
+  var date=(document.getElementById('closed-date')||{}).value||'';
+  var comment=(document.getElementById('closed-comment')||{}).value||'';
+  if(!date){alert(t('fillAll'));return;}
+  _post('closed_days',{date:date,comment:comment}).then(function(r){
+    var f=r.fields||{};f._id=r.id;
+    state.closedDays.push(f);
+    renderAdmin();
+  });
+}
+
+function deleteClosedDay(id){
+  if(!confirm(t('confirmDelete')))return;
+  _destroy('closed_days',id).then(function(){
+    state.closedDays=state.closedDays.filter(function(c){return c._id!==id;});
+    renderAdmin();
+  });
+}
+
+function openAddService(){
+  state.editingService=null;
+  var name=prompt(t('serviceName'));if(!name)return;
+  var price=prompt(t('servicePrice'));if(!price)return;
+  var duration=prompt(t('serviceDuration'));if(!duration)return;
+  var desc=prompt(t('serviceDesc'))||'';
+  _post('services',{name:name,price:parseFloat(price),duration:parseInt(duration),description:desc}).then(function(r){
+    var f=r.fields||{};f._id=r.id;
+    state.services.push(f);
+    renderAdmin();
+    renderServices();
+  });
+}
+
+function openEditService(id){
+  var s=state.services.find(function(x){return x._id===id;});if(!s)return;
+  var name=prompt(t('serviceName'),s.name);if(!name)return;
+  var price=prompt(t('servicePrice'),s.price);if(!price)return;
+  var duration=prompt(t('serviceDuration'),s.duration);if(!duration)return;
+  var desc=prompt(t('serviceDesc'),s.description||'');
+  _patch('services',s._id,{name:name,price:parseFloat(price),duration:parseInt(duration),description:desc||''}).then(function(){
+    s.name=name;s.price=parseFloat(price);s.duration=parseInt(duration);s.description=desc||'';
+    renderAdmin();renderServices();
+  });
+}
+
+function deleteService(id){
+  if(!confirm(t('confirmDelete')))return;
+  _destroy('services',id).then(function(){
+    state.services=state.services.filter(function(s){return s._id!==id;});
+    renderAdmin();renderServices();
+  });
+}
+
+function openNotifs(){
+  var el=document.getElementById('notif-list');
+  if(!el)return;
+  document.getElementById('notif-title').textContent=t('notifications');
+  if(state.adminNotifs.length===0){
+    el.innerHTML='<div style="text-align:center;color:var(--sub);padding:24px">'+t('noNotifications')+'</div>';
+  } else {
+    var html='<button onclick="state.adminNotifs=[];renderTabBar();closeModal(\'notif-modal\')" style="border:none;background:var(--border);border-radius:10px;padding:8px 16px;font-size:13px;cursor:pointer;margin-bottom:12px">'+t('clearAll')+'</button>';
+    state.adminNotifs.forEach(function(n){
+      html+='<div class="notif-item"><div style="font-weight:600;font-size:13px">'+n.msg+'</div><div style="font-size:11px;color:var(--sub);margin-top:2px">'+n.time+'</div></div>';
+    });
+    el.innerHTML=html;
+  }
+  openModal('notif-modal');
+}
+
+// ============ MUSIC ============
+function toggleMusic(){
+  var audio=document.getElementById('audio-player');
+  var icon=document.getElementById('music-icon');
+  var label=document.getElementById('music-label');
+  if(audio.paused){
+    audio.play().then(function(){icon.textContent='⏸';label.textContent='Lofi ♪';}).catch(function(){});
+  } else {
+    audio.pause();icon.textContent='♪';label.textContent='Music';
+  }
+}
+
+// ============ MODAL ============
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.addEventListener('click',function(e){
+  if(e.target.classList.contains('modal-overlay'))e.target.classList.remove('open');
+});
+
+// ============ AUTH TOGGLE ============
+document.getElementById('auth-toggle').addEventListener('click',function(){
+  state.isLogin=!state.isLogin;
+  renderAuth();
+});
+</script>
+</body>
+</html>

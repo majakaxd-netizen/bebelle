@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useContext, useMemo, useRef } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, Alert, StatusBar, Image, Linking, ActivityIndicator, RefreshControl } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Notifications from 'expo-notifications';
+import * as Device from 'expo-device';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -123,6 +125,14 @@ export default function App() {
   function getHairTip(code,temp,lang){var ja=lang==='ja';if(temp>=30)return ja?'とても暑いです！UVカットスプレーでヘアケアをしましょう。':'Very hot! Use UV protection spray to shield your hair from sun damage.';if(temp>=26)return ja?'暑い日が続いています。保湿ヘアミストがオススメです。':'Hot and sunny! Keep hair hydrated with a leave-in moisture mist.';if(code>=200&&code<600)return ja?'雨の日は湿気で髪が広がります。洗い流さないトリートメントでまとめましょう。':'Rainy day! Humidity causes frizz — use a leave-in conditioner to tame your hair.';if(temp<18)return ja?'涼しい季節です。頭皮マッサージで血行を促進しましょう！':'Cool day! Great time for a head spa treatment.';return ja?'今日は良いコンディションです。サロンでのトリートメントにぴったり！':'Perfect salon weather today! Great day for a relaxing treatment.';}
 
   function AppProvider(props){
+    useEffect(function(){
+      Notifications.setNotificationHandler({handleNotification:async function(){return {shouldShowAlert:true,shouldPlaySound:true,shouldSetBadge:true};},});
+      if(Device.isDevice){
+        Notifications.requestPermissionsAsync().then(function(s){
+          if(s.status!=='granted'){console.log('Notification permission denied');}
+        });
+      }
+    },[]);
     var ls=useState(null);var lang=ls[0];var setLang=ls[1];
     var us=useState(null);var user=us[0];var setUser=us[1];
     var usrs=useState([]);var users=usrs[0];var setUsers=usrs[1];
@@ -135,6 +145,11 @@ export default function App() {
     return React.createElement(AppCtx.Provider,{value:{lang:lang,setLang:setLang,t:t,user:user,setUser:setUser,isAdmin:isAdmin,users:users,setUsers:setUsers,adminNotifs:adminNotifs,pushAdminNotif:pushAdminNotif,dismissAdminNotif:dismissAdminNotif,clearAdminNotifs:clearAdminNotifs}},props.children);
   }
   function useApp(){return useContext(AppCtx);}
+  async function sendLocalNotif(title,body){
+    try{
+      await Notifications.scheduleNotificationAsync({content:{title:title,body:body,sound:true},trigger:null});
+    }catch(e){console.log('Notif error:',e.message);}
+  }
 
   function WeatherWidget(){
     var app=useApp();
