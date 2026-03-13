@@ -505,7 +505,7 @@ var ADMIN_PASS='fumiko1425';
 var PAYPAL_ME='https://paypal.me/martinovoamena/';
 var WEATHER_LAT=24.3327711;
 var WEATHER_LON=124.173763;
-var HORARIO={1:{a:9,c:19},2:{a:9,c:19},3:{a:9,c:19},4:{a:9,c:19},5:{a:9,c:19},6:{a:9,c:18},0:{a:10,c:17}};
+var HORARIO={1:{a:10,am:0,c:20,cm:30},2:{a:10,am:0,c:20,cm:30},3:{a:10,am:0,c:20,cm:30},4:{a:10,am:0,c:20,cm:30},5:{a:10,am:0,c:20,cm:30},6:{a:9,am:30,c:20,cm:0},0:{a:9,am:30,c:20,cm:0}};
 
 // ── STATE ──
 var state={
@@ -560,7 +560,8 @@ var T={
     closedDays:'Closed Days',addClosedDay:'Mark Day Closed',salonConfig:'Salon Config',
     configuration:'Configuration',notifications:'Notifications',clearAll:'Clear All',
     noNotifications:'No notifications',confirmDelete:'Delete this?',
-    rememberMe:'Remember me'
+    rememberMe:'Remember me',
+    noTimeSlots:'No available times for this service duration. Please choose a different date or shorter service.'
   },
   ja:{
     selectLang:'言語を選択',english:'English',japanese:'日本語',
@@ -600,7 +601,8 @@ var T={
     closedDays:'休業日',addClosedDay:'休業日を設定',salonConfig:'サロン設定',
     configuration:'設定',notifications:'通知',clearAll:'全削除',
     noNotifications:'通知なし',confirmDelete:'削除しますか？',
-    rememberMe:'ログイン状態を保持'
+    rememberMe:'ログイン状態を保持',
+    noTimeSlots:'このサービスの時間に合う空き時間がありません。別の日付または短いサービスをお選びください。'
   }
 };
 function t(k){return(T[state.lang||'en']||T.en)[k]||k;}
@@ -953,7 +955,7 @@ function renderBookForm(){
       html+='<div class="day-slot'+(sel?' selected':'')+(disabled?' disabled':'')+'" onclick="'+(disabled?'':'selectDate(\''+ds+'\')')+'">';
       html+='<span class="day-slot-dow">'+days[dow]+'</span>';
       html+='<span class="day-slot-num">'+d.getDate()+'</span>';
-      html+='<span class="day-slot-time">'+(disabled?'✕':(h.a+'-'+h.c))+'</span>';
+      html+='<span class="day-slot-time">'+(disabled?'✕':(h.a+':'+String(h.am).padStart(2,'0')+'-'+h.c+':'+String(h.cm).padStart(2,'0')))+'</span>';
       html+='</div>';
     }
     html+='</div>';
@@ -986,18 +988,28 @@ function renderBookForm(){
     var dow2=new Date(state.bookDate+'T12:00:00').getDay();
     var h2=HORARIO[dow2];
     var totD2=state.bookServices.reduce(function(a,s){return a+parseInt(s.duration||0);},0);
+    var openMin=h2.a*60+(h2.am||0);
+    var closeMin=h2.c*60+(h2.cm||0);
     html+='<div class="step-title">'+t('selectTime')+'</div>';
+    html+='<div style="background:var(--rose-mist);border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:var(--stone);border:1px solid var(--border)">';
+    html+='⏱ '+t('min')+': <strong>'+totD2+'</strong> &nbsp;·&nbsp; ';
+    html+=t('hours')+': <strong>'+String(h2.a).padStart(2,'0')+':'+String(h2.am||0).padStart(2,'0')+' – '+String(h2.c).padStart(2,'0')+':'+String(h2.cm||0).padStart(2,'0')+'</strong></div>';
     html+='<div style="display:flex;flex-wrap:wrap;margin-bottom:12px">';
-    for(var hr=h2.a;hr<h2.c;hr++){
-      for(var mn=0;mn<60;mn+=30){
-        var ts=String(hr).padStart(2,'0')+':'+String(mn).padStart(2,'0');
-        var te=endTime(ts,totD2);
-        if(parseInt(te.split(':')[0])>h2.c||(parseInt(te.split(':')[0])===h2.c&&parseInt(te.split(':')[1])>0))continue;
-        var conflict=state.reservations.filter(function(r){return r.date===state.bookDate&&r.status==='confirmed';}).some(function(r){return ts<r.endTime&&te>r.time;});
-        var sel2=state.bookTime===ts;
-        html+='<div class="time-slot'+(sel2?' selected':'')+(conflict?' disabled':'')+'" onclick="'+(conflict?'':'selectTime(\''+ts+'\')')+'">';
-        html+=ts+(conflict?' ✕':'');html+='</div>';
-      }
+    var hasSlots=false;
+    for(var startM=openMin;startM<closeMin;startM+=30){
+      var endM=startM+totD2;
+      if(endM>closeMin)continue;
+      hasSlots=true;
+      var tsH=Math.floor(startM/60);var tsMn=startM%60;
+      var ts=String(tsH).padStart(2,'0')+':'+String(tsMn).padStart(2,'0');
+      var te=String(Math.floor(endM/60)).padStart(2,'0')+':'+String(endM%60).padStart(2,'0');
+      var conflict=state.reservations.filter(function(r){return r.date===state.bookDate&&r.status==='confirmed';}).some(function(r){return ts<r.endTime&&te>r.time;});
+      var sel2=state.bookTime===ts;
+      html+='<div class="time-slot'+(sel2?' selected':'')+(conflict?' disabled':'')+'" onclick="'+(conflict?'':'selectTime(\''+ts+'\'')+'">';
+      html+=ts+(conflict?' ✕':'');html+='</div>';
+    }
+    if(!hasSlots){
+      html+='<div style="width:100%;padding:20px;text-align:center;color:var(--error);font-size:13px;line-height:1.6">⚠️ '+t('noTimeSlots')+'</div>';
     }
     html+='</div>';
     html+='<div style="display:flex;gap:8px">';
@@ -1112,9 +1124,9 @@ function renderAbout(){
   html+='<p style="font-size:14px;color:var(--stone);line-height:1.8">'+(cfg.history||t('historyText'))+'</p></div>';
   // Hours
   html+='<div class="card"><div class="about-section-title">'+t('hours')+'</div>';
-  html+='<div class="hours-row"><span style="color:var(--stone)">'+t('mondayFriday')+'</span><span style="font-weight:600">09:00 – 19:00</span></div>';
-  html+='<div class="hours-row"><span style="color:var(--stone)">'+t('saturday')+'</span><span style="font-weight:600">09:00 – 18:00</span></div>';
-  html+='<div class="hours-row"><span style="color:var(--stone)">'+t('sunday')+'</span><span style="font-weight:600">10:00 – 17:00</span></div></div>';
+  html+='<div class="hours-row"><span style="color:var(--stone)">'+t('mondayFriday')+'</span><span style="font-weight:600">10:00 – 20:30</span></div>';
+  html+='<div class="hours-row"><span style="color:var(--stone)">'+t('saturday')+'</span><span style="font-weight:600">09:30 – 20:00</span></div>';
+  html+='<div class="hours-row"><span style="color:var(--stone)">'+t('sunday')+'</span><span style="font-weight:600">09:30 – 20:00</span></div></div>';
   // Contact
   html+='<div class="card"><div class="about-section-title">'+t('contact')+'</div>';
   html+='<div style="font-size:14px;color:var(--stone);margin-bottom:12px;line-height:1.6">📍 '+(cfg.address||t('addressText'))+'</div>';
