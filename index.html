@@ -454,7 +454,7 @@ audio{display:none;}
     <span id="music-icon">♪</span><span id="music-label">Music</span>
   </button>
   <audio id="audio-player" loop>
-    <source src="https://www.dropbox.com/scl/fi/w0tcgwgj1h4k9gcw7aaeo/RAINING-IN-Lofi-HipHop.mp3?rlkey=t71rk52la53oivr7iylg47r37&st=fgtzar8n&dl=1" type="audio/mpeg">
+    <source src="https://res.cloudinary.com/dtu902gsb/video/upload/v1773360764/RAINING_IN_%EF%BC%AF%EF%BC%B3%EF%BC%A1%EF%BC%AB%EF%BC%A1_Lofi_HipHop_pwcr0j.mp3" type="audio/mpeg">
   </audio>
 
   <!-- BOOK MODAL -->
@@ -853,7 +853,13 @@ function renderReservations(){
   var bb=document.getElementById('book-btn-text');if(bb)bb.textContent=t('bookTitle');
   renderWeather();
   var u=state.user;if(!u)return;
-  var myRes=state.reservations.filter(function(r){return r.username&&r.username.toLowerCase()===u.username.toLowerCase();});
+  var now12=new Date(Date.now()-12*60*60*1000);
+  var myRes=state.reservations.filter(function(r){
+    if(!r.username||r.username.toLowerCase()!==u.username.toLowerCase())return false;
+    if(r.status!=='confirmed')return false;
+    var apptEnd=new Date((r.date||'2000-01-01')+'T'+(r.endTime||r.time||'00:00'));
+    return apptEnd>now12;
+  });
   myRes=myRes.sort(function(a,b){
     return new Date((a.date||'2000-01-01')+'T'+(a.time||'00:00'))-new Date((b.date||'2000-01-01')+'T'+(b.time||'00:00'));
   });
@@ -863,20 +869,16 @@ function renderReservations(){
     html+='<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-text">'+t('noAppointments')+'</div></div>';
   } else {
     myRes.forEach(function(r){
-      var cancelled=isCancelled(r.status);
-      var sClass=r.status==='confirmed'?'status-confirmed':r.status==='cancelled_late'?'status-late':'status-cancelled';
-      html+='<div class="appt-card" style="opacity:'+(cancelled?'0.6':'1')+'">';
-      if(!cancelled)html+='<div class="appt-card-accent"></div>';
+      html+='<div class="appt-card">';
+      html+='<div class="appt-card-accent"></div>';
       html+='<div class="appt-card-body">';
       html+='<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">';
       html+='<div><div style="font-weight:600;font-size:16px">'+( r.date||'' )+'</div><div style="color:var(--stone);font-size:13px;margin-top:2px">'+( r.time||'' )+' – '+(r.endTime||'')+'</div></div>';
-      html+='<span class="status-badge '+sClass+'">'+( r.status||'' )+'</span></div>';
+      html+='<span class="status-badge status-confirmed">'+( r.status||'' )+'</span></div>';
       html+='<div style="font-size:13px;color:var(--stone);margin-bottom:10px">✂️ '+(r.serviceNames||'')+'</div>';
       html+='<div style="display:flex;justify-content:space-between;align-items:center">';
       html+='<span style="font-family:\'Cormorant Garamond\',serif;font-size:22px;font-weight:600;color:var(--rose)">¥'+(r.totalPrice||0)+'</span>';
-      if(!cancelled){
-        html+='<button onclick="openManage(\''+r._id+'\')" style="background:var(--rose-mist);border:1.5px solid var(--rose);border-radius:10px;padding:7px 16px;font-size:12px;font-weight:500;color:var(--rose);cursor:pointer;font-family:\'DM Sans\',sans-serif">'+t('manage')+'</button>';
-      }
+      html+='<button onclick="openManage(\''+r._id+'\')" style="background:var(--rose-mist);border:1.5px solid var(--rose);border-radius:10px;padding:7px 16px;font-size:12px;font-weight:500;color:var(--rose);cursor:pointer;font-family:\'DM Sans\',sans-serif">'+t('manage')+'</button>';
       html+='</div></div></div>';
     });
   }
@@ -1150,7 +1152,12 @@ function renderAdmin(){
         html+='<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">';
         html+='<div><div style="font-weight:600">'+t('client')+': '+(r.clientName||r.username||'')+'</div>';
         html+='<div style="color:var(--stone);font-size:13px;margin-top:2px">'+r.date+'  '+r.time+'</div></div>';
-        html+='<span class="status-badge '+sClass+'">'+r.status+'</span></div>';
+        html+='<div style="display:flex;align-items:center;gap:8px">';
+        html+='<span class="status-badge '+sClass+'">'+r.status+'</span>';
+        if(r.status==='cancelled_late'){
+          html+='<button onclick="deleteReservation(\''+r._id+'\')" style="border:none;background:#FEE2E2;color:var(--error);border-radius:8px;width:28px;height:28px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>';
+        }
+        html+='</div></div>';
         html+='<div style="font-size:13px;color:var(--stone);margin-bottom:6px">'+r.serviceNames+'</div>';
         if(r.status==='cancelled_late')html+='<div style="padding:8px 10px;background:#FEF3C7;border-radius:8px;font-size:12px;color:#92400E;margin-bottom:6px">'+t('lateCancelBadge')+'</div>';
         html+='<div style="font-family:\'Cormorant Garamond\',serif;font-size:20px;color:var(--rose)">¥'+r.totalPrice+'</div>';
@@ -1286,6 +1293,14 @@ function deleteService(id){
   if(!confirm(t('confirmDelete')))return;
   _destroy('services',id).then(function(){
     state.services=state.services.filter(function(s){return s._id!==id;});renderAdmin();renderServices();
+  });
+}
+
+function deleteReservation(id){
+  if(!confirm(t('confirmDelete')))return;
+  _destroy('reservations',id).then(function(){
+    state.reservations=state.reservations.filter(function(r){return r._id!==id;});
+    renderAdmin();
   });
 }
 
