@@ -1005,7 +1005,7 @@ function renderBookForm(){
       var te=String(Math.floor(endM/60)).padStart(2,'0')+':'+String(endM%60).padStart(2,'0');
       var conflict=state.reservations.filter(function(r){return r.date===state.bookDate&&r.status==='confirmed';}).some(function(r){return ts<r.endTime&&te>r.time;});
       var sel2=state.bookTime===ts;
-      html+='<div class="time-slot'+(sel2?' selected':'')+(conflict?' disabled':'')+'" onclick="'+(conflict?'':'selectTime(\''+ts+'\'')+'">';
+      html+='<div class="time-slot'+(sel2?' selected':'')+(conflict?' disabled':'')+'" onclick="'+(conflict?'':'selectTime(\''+ts+'\')')+'">';
       html+=ts+(conflict?' ✕':'');html+='</div>';
     }
     if(!hasSlots){
