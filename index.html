@@ -502,7 +502,6 @@ var _B='https://api.airtable.com/v0/app5hrql36OKNfWvI/';
 var _K='Bearer patrBX7nDs5CywQRA.7c6a8fb5a324951f46b2f9f74f39909770be888e3e04bb549f7a62c2562a2f26';
 var ADMIN_ID='fumiko';
 var ADMIN_PASS='fumiko1425';
-var PAYPAL_ME='https://paypal.me/martinovoamena/';
 var WEATHER_LAT=24.3327711;
 var WEATHER_LON=124.173763;
 var HORARIO={1:{a:10,am:0,c:20,cm:30},2:{a:10,am:0,c:20,cm:30},3:{a:10,am:0,c:20,cm:30},4:{a:10,am:0,c:20,cm:30},5:{a:10,am:0,c:20,cm:30},6:{a:9,am:30,c:20,cm:0},0:{a:9,am:30,c:20,cm:0}};
@@ -513,7 +512,7 @@ var state={
   services:[],reservations:[],users:[],salonCfg:{},closedDays:[],
   adminNotifs:[],
   currentTab:'res',
-  bookStep:1,bookDate:null,bookTime:null,bookServices:[],bookPayment:'cash',
+  bookStep:1,bookDate:null,bookTime:null,bookServices:[],
   manageRes:null,
   isLogin:true,rememberMe:false,
   adminTab:'reservations',
@@ -891,27 +890,22 @@ function openManage(id){
   var r=state.reservations.find(function(x){return x._id===id;});if(!r)return;
   state.manageRes=r;
   document.getElementById('manage-modal-title').textContent=t('manage');
-  var within24=isWithin24h(r.date,r.time);
   var html='<div style="background:var(--rose-mist);border-radius:16px;padding:16px;margin-bottom:16px;border:1px solid var(--border)">';
   html+='<div style="font-weight:600;font-size:16px;margin-bottom:4px">'+r.date+'  '+r.time+'</div>';
   html+='<div style="color:var(--stone);font-size:13px;margin-bottom:8px">'+r.serviceNames+'</div>';
   html+='<div style="font-family:\'Cormorant Garamond\',serif;font-size:24px;color:var(--rose)">¥'+r.totalPrice+'</div></div>';
-  if(within24){
-    html+='<div style="background:#FEF3C7;border-radius:12px;padding:12px;margin-bottom:12px;font-size:13px;color:#92400E;line-height:1.5">⚠️ '+t('cancelWarning')+'</div>';
-  }
-  html+='<button class="btn btn-danger" onclick="doCancel(\''+r._id+'\','+within24+')">'+t('cancel')+'</button>';
+  html+='<button class="btn btn-danger" onclick="doCancel(\''+r._id+'\')">'+t('cancel')+'</button>';
   html+='<button class="btn btn-secondary" onclick="closeModal(\'manage-modal\')">'+t('no')+'</button>';
   document.getElementById('manage-form').innerHTML=html;
   openModal('manage-modal');
 }
 
-function doCancel(id,isLate){
+function doCancel(id){
   var r=state.reservations.find(function(x){return x._id===id;});if(!r)return;
-  var ns=isLate?'cancelled_late':'cancelled';
-  _patch('reservations',r._id,{status:ns}).then(function(){
-    r.status=ns;
+  _patch('reservations',r._id,{status:'cancelled'}).then(function(){
+    r.status='cancelled';
     closeModal('manage-modal');
-    pushNotif((isLate?t('lateCancelBadge')+' ':'')+t('adminCancelled')+' '+(r.clientName||r.username||''));
+    pushNotif(t('adminCancelled')+' '+(r.clientName||r.username||''));
     renderReservations();
     alert(t('cancelSuccess'));
   });
@@ -919,7 +913,7 @@ function doCancel(id,isLate){
 
 // ── BOOKING ──
 function showBookModal(){
-  state.bookStep=1;state.bookDate=null;state.bookTime=null;state.bookServices=[];state.bookPayment='cash';
+  state.bookStep=1;state.bookDate=null;state.bookTime=null;state.bookServices=[];
   renderBookForm();
   openModal('book-modal');
 }
@@ -1028,11 +1022,7 @@ function renderBookForm(){
     html+='<div class="summary-row">✂️ <span>'+state.bookServices.map(function(s){return s.name;}).join(', ')+'</span></div>';
     html+='<div style="margin-top:8px"><span class="summary-total">¥'+totP2+'</span><span style="color:var(--stone);font-size:13px;margin-left:8px">/ '+totD3+t('min')+'</span></div>';
     html+='</div>';
-    html+='<div class="step-title">'+t('payment')+'</div>';
-    html+='<div style="display:flex;gap:8px;margin-bottom:16px">';
-    html+='<div class="chip'+(state.bookPayment==='cash'?' selected':'')+'" onclick="state.bookPayment=\'cash\';renderBookForm()">💴 '+t('cash')+'</div>';
-    html+='<div class="chip'+(state.bookPayment==='online'?' selected':'')+'" onclick="state.bookPayment=\'online\';renderBookForm()">💳 '+t('online')+'</div>';
-    html+='</div>';
+
     html+='<div style="display:flex;gap:8px">';
     html+='<button class="btn btn-secondary" style="margin-bottom:0;flex:0 0 48px" onclick="state.bookStep=3;renderBookForm()">←</button>';
     html+='<button class="btn btn-primary" style="margin-bottom:0;flex:1" onclick="doBook()">'+t('bookBtn')+'</button>';
@@ -1060,16 +1050,13 @@ function doBook(){
     endTime:et,status:'confirmed',
     serviceNames:state.bookServices.map(function(s){return s.name;}).join(', '),
     totalPrice:totP,totalDuration:totD,
-    payment_method:state.bookPayment,created_at:new Date().toISOString()
+    created_at:new Date().toISOString()
   };
   _post('reservations',fields).then(function(resp){
     var f=resp.fields||{};f._id=resp.id;f.id=f.id||resp.id;
     state.reservations.push(f);
     closeModal('book-modal');
-    if(state.bookPayment==='online'){
-      var ppUrl=(state.salonCfg&&state.salonCfg.paypal)?state.salonCfg.paypal:PAYPAL_ME;
-      window.open(ppUrl+totP+'JPY','_blank');
-    }
+
     pushNotif(t('adminNewBooking')+' '+(state.user.name||state.user.username)+' '+state.bookDate+' '+state.bookTime);
     renderReservations();
     alert(t('bookSuccess'));
@@ -1157,7 +1144,7 @@ function renderAdmin(){
   html+='</div>';
 
   if(state.adminTab==='reservations'){
-    var adminRes=state.reservations.filter(function(r){return r.status==='confirmed'||r.status==='cancelled_late';})
+    var adminRes=state.reservations.filter(function(r){return r.status==='confirmed';})
       .sort(function(a,b){return new Date(a.date+'T'+(a.time||'00:00'))-new Date(b.date+'T'+(b.time||'00:00'));});
     if(adminRes.length===0){
       html+='<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">'+t('noAppointments')+'</div></div>';
@@ -1170,12 +1157,10 @@ function renderAdmin(){
         html+='<div style="color:var(--stone);font-size:13px;margin-top:2px">'+r.date+'  '+r.time+'</div></div>';
         html+='<div style="display:flex;align-items:center;gap:8px">';
         html+='<span class="status-badge '+sClass+'">'+r.status+'</span>';
-        if(r.status==='cancelled_late'){
-          html+='<button onclick="deleteReservation(\''+r._id+'\')" style="border:none;background:#FEE2E2;color:var(--error);border-radius:8px;width:28px;height:28px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>';
-        }
+
         html+='</div></div>';
         html+='<div style="font-size:13px;color:var(--stone);margin-bottom:6px">'+r.serviceNames+'</div>';
-        if(r.status==='cancelled_late')html+='<div style="padding:8px 10px;background:#FEF3C7;border-radius:8px;font-size:12px;color:#92400E;margin-bottom:6px">'+t('lateCancelBadge')+'</div>';
+
         html+='<div style="font-family:\'Cormorant Garamond\',serif;font-size:20px;color:var(--rose)">¥'+r.totalPrice+'</div>';
         html+='</div>';
       });
@@ -1200,7 +1185,6 @@ function renderAdmin(){
     html+='<label>Instagram</label><input type="text" id="cfg-ig" value="'+(cfg.instagram||'')+'">';
     html+='<label>Facebook</label><input type="text" id="cfg-fb" value="'+(cfg.facebook||'')+'">';
     html+='<label>LINE ID</label><input type="text" id="cfg-line" value="'+(cfg.line||'')+'">';
-    html+='<label>PayPal URL</label><input type="text" id="cfg-paypal" value="'+(cfg.paypal||'')+'">';
     html+='<label>Phone</label><input type="text" id="cfg-phone" value="'+(cfg.phone||'')+'">';
     html+='<label>Address (English)</label><input type="text" id="cfg-addr-en" value="'+(cfg.address_en||cfg.address||'')+'">';
     html+='<label>Address (日本語)</label><input type="text" id="cfg-addr-ja" value="'+(cfg.address_ja||'')+'">';
@@ -1235,7 +1219,6 @@ function saveConfig(){
     instagram:(document.getElementById('cfg-ig')||{}).value||'',
     facebook:(document.getElementById('cfg-fb')||{}).value||'',
     line:(document.getElementById('cfg-line')||{}).value||'',
-    paypal:(document.getElementById('cfg-paypal')||{}).value||'',
     phone:(document.getElementById('cfg-phone')||{}).value||'',
     address_en:(document.getElementById('cfg-addr-en')||{}).value||'',
     address_ja:(document.getElementById('cfg-addr-ja')||{}).value||'',
