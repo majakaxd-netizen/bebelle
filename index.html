@@ -1086,15 +1086,17 @@ function renderServices(){
   }
   var html='';
   state.services.forEach(function(s){
+    var svcName=state.lang==='ja'?(s.name_ja||s.name):s.name;
+    var svcDesc=state.lang==='ja'?(s.description_ja||s.description):s.description;
     html+='<div class="svc-card">';
     if(s.photo){
-      html+='<img src="'+s.photo+'" class="svc-photo" alt="'+s.name+'">';
+      html+='<img src="'+s.photo+'" class="svc-photo" alt="'+svcName+'">';
     } else {
       html+='<div class="svc-photo-placeholder">✂️</div>';
     }
     html+='<div class="svc-body">';
-    html+='<div class="svc-name">'+s.name+'</div>';
-    if(s.description)html+='<div class="svc-desc">'+s.description+'</div>';
+    html+='<div class="svc-name">'+svcName+'</div>';
+    if(svcDesc)html+='<div class="svc-desc">'+svcDesc+'</div>';
     html+='<div class="svc-meta"><div class="svc-duration">⏱ '+s.duration+' '+t('min')+'</div>';
     html+='<div class="svc-price">¥'+s.price+'</div></div>';
     html+='</div></div>';
@@ -1120,8 +1122,9 @@ function renderAbout(){
   });
   html+='</div>';
   // Story
+  var storyText=state.lang==='ja'?(cfg.history_ja||cfg.history||t('historyText')):(cfg.history_en||cfg.history||t('historyText'));
   html+='<div class="card"><div class="about-section-title">'+t('history')+'</div>';
-  html+='<p style="font-size:14px;color:var(--stone);line-height:1.8">'+(cfg.history||t('historyText'))+'</p></div>';
+  html+='<p style="font-size:14px;color:var(--stone);line-height:1.8">'+storyText+'</p></div>';
   // Hours
   html+='<div class="card"><div class="about-section-title">'+t('hours')+'</div>';
   html+='<div class="hours-row"><span style="color:var(--stone)">'+t('mondayFriday')+'</span><span style="font-weight:600">10:00 – 20:30</span></div>';
@@ -1129,7 +1132,8 @@ function renderAbout(){
   html+='<div class="hours-row"><span style="color:var(--stone)">'+t('sunday')+'</span><span style="font-weight:600">09:30 – 20:00</span></div></div>';
   // Contact
   html+='<div class="card"><div class="about-section-title">'+t('contact')+'</div>';
-  html+='<div style="font-size:14px;color:var(--stone);margin-bottom:12px;line-height:1.6">📍 '+(cfg.address||t('addressText'))+'</div>';
+  var addrText=state.lang==='ja'?(cfg.address_ja||cfg.address||t('addressText')):(cfg.address_en||cfg.address||t('addressText'));
+  html+='<div style="font-size:14px;color:var(--stone);margin-bottom:12px;line-height:1.6">📍 '+addrText+'</div>';
   if(cfg.instagram)html+='<a href="https://instagram.com/'+cfg.instagram+'" target="_blank" class="contact-link"><span class="contact-link-icon">📸</span> @'+cfg.instagram+'</a>';
   if(cfg.facebook)html+='<a href="https://facebook.com/'+cfg.facebook+'" target="_blank" class="contact-link"><span class="contact-link-icon">👤</span> '+cfg.facebook+'</a>';
   if(cfg.line)html+='<div class="contact-link"><span class="contact-link-icon">💬</span> LINE: '+cfg.line+'</div>';
@@ -1182,7 +1186,8 @@ function renderAdmin(){
       html+='<div class="admin-svc-row">';
       if(s.photo){html+='<img src="'+s.photo+'" class="admin-svc-photo" alt="">';}
       else{html+='<div class="admin-svc-photo" style="display:flex;align-items:center;justify-content:center;font-size:20px">✂️</div>';}
-      html+='<div style="flex:1"><div style="font-weight:600;font-size:14px">'+s.name+'</div>';
+      var adminSvcName=s.name+(s.name_ja?' / '+s.name_ja:'');
+      html+='<div style="flex:1"><div style="font-weight:600;font-size:14px">'+adminSvcName+'</div>';
       html+='<div style="font-size:12px;color:var(--stone)">¥'+s.price+' · '+s.duration+t('min')+'</div></div>';
       html+='<div style="display:flex;gap:6px">';
       html+='<button onclick="openEditService(\''+s._id+'\')" style="border:none;background:#EFF6FF;color:#3B82F6;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer">'+t('editService')+'</button>';
@@ -1197,8 +1202,10 @@ function renderAdmin(){
     html+='<label>LINE ID</label><input type="text" id="cfg-line" value="'+(cfg.line||'')+'">';
     html+='<label>PayPal URL</label><input type="text" id="cfg-paypal" value="'+(cfg.paypal||'')+'">';
     html+='<label>Phone</label><input type="text" id="cfg-phone" value="'+(cfg.phone||'')+'">';
-    html+='<label>Address</label><input type="text" id="cfg-addr" value="'+(cfg.address||'')+'">';
-    html+='<label>Our Story</label><textarea id="cfg-history" rows="4" style="resize:none">'+(cfg.history||'')+'</textarea>';
+    html+='<label>Address (English)</label><input type="text" id="cfg-addr-en" value="'+(cfg.address_en||cfg.address||'')+'">';
+    html+='<label>Address (日本語)</label><input type="text" id="cfg-addr-ja" value="'+(cfg.address_ja||'')+'">';
+    html+='<label>Our Story (English)</label><textarea id="cfg-history-en" rows="3" style="resize:none">'+(cfg.history_en||cfg.history||'')+'</textarea>';
+    html+='<label>Our Story (日本語)</label><textarea id="cfg-history-ja" rows="3" style="resize:none">'+(cfg.history_ja||'')+'</textarea>';
     [1,2,3].forEach(function(n){
       html+='<div style="margin-bottom:14px">';
       if(cfg['photo'+n])html+='<img id="cfg-photo-preview-'+n+'" src="'+cfg['photo'+n]+'" style="width:100%;height:120px;object-fit:cover;border-radius:12px;margin-bottom:8px">';
@@ -1230,8 +1237,10 @@ function saveConfig(){
     line:(document.getElementById('cfg-line')||{}).value||'',
     paypal:(document.getElementById('cfg-paypal')||{}).value||'',
     phone:(document.getElementById('cfg-phone')||{}).value||'',
-    address:(document.getElementById('cfg-addr')||{}).value||'',
-    history:(document.getElementById('cfg-history')||{}).value||'',
+    address_en:(document.getElementById('cfg-addr-en')||{}).value||'',
+    address_ja:(document.getElementById('cfg-addr-ja')||{}).value||'',
+    history_en:(document.getElementById('cfg-history-en')||{}).value||'',
+    history_ja:(document.getElementById('cfg-history-ja')||{}).value||'',
     photo1:state.salonCfg.photo1||'',photo2:state.salonCfg.photo2||'',photo3:state.salonCfg.photo3||''
   };
   var cfg=state.salonCfg;
@@ -1269,17 +1278,19 @@ function deleteClosedDay(id){
 }
 
 function openAddService(){
-  var name=prompt(t('serviceName'));if(!name)return;
+  var name=prompt('Service Name (English)');if(!name)return;
+  var nameJa=prompt('サービス名 (日本語)')||'';
   var price=prompt(t('servicePrice'));if(!price)return;
   var duration=prompt(t('serviceDuration'));if(!duration)return;
-  var desc=prompt(t('serviceDesc'))||'';
+  var desc=prompt('Description (English)')||'';
+  var descJa=prompt('説明 (日本語)')||'';
   if(!confirm('Add a photo?')){
-    _post('services',{name:name,price:parseFloat(price),duration:parseInt(duration),description:desc,photo:''}).then(function(r){
+    _post('services',{name:name,name_ja:nameJa,price:parseFloat(price),duration:parseInt(duration),description:desc,description_ja:descJa,photo:''}).then(function(r){
       var f=r.fields||{};f._id=r.id;state.services.push(f);renderAdmin();renderServices();
     });return;
   }
   uploadPhoto(function(url){
-    _post('services',{name:name,price:parseFloat(price),duration:parseInt(duration),description:desc,photo:url}).then(function(r){
+    _post('services',{name:name,name_ja:nameJa,price:parseFloat(price),duration:parseInt(duration),description:desc,description_ja:descJa,photo:url}).then(function(r){
       var f=r.fields||{};f._id=r.id;state.services.push(f);renderAdmin();renderServices();
     });
   });
@@ -1287,13 +1298,15 @@ function openAddService(){
 
 function openEditService(id){
   var s=state.services.find(function(x){return x._id===id;});if(!s)return;
-  var name=prompt(t('serviceName'),s.name);if(name===null)return;
+  var name=prompt('Service Name (English)',s.name);if(name===null)return;
+  var nameJa=prompt('サービス名 (日本語)',s.name_ja||'');if(nameJa===null)return;
   var price=prompt(t('servicePrice'),s.price);if(price===null)return;
   var duration=prompt(t('serviceDuration'),s.duration);if(duration===null)return;
-  var desc=prompt(t('serviceDesc'),s.description||'');
+  var desc=prompt('Description (English)',s.description||'');
+  var descJa=prompt('説明 (日本語)',s.description_ja||'');
   function save(photoUrl){
-    _patch('services',s._id,{name:name,price:parseFloat(price),duration:parseInt(duration),description:desc||'',photo:photoUrl}).then(function(){
-      s.name=name;s.price=parseFloat(price);s.duration=parseInt(duration);s.description=desc||'';s.photo=photoUrl;
+    _patch('services',s._id,{name:name,name_ja:nameJa,price:parseFloat(price),duration:parseInt(duration),description:desc||'',description_ja:descJa||'',photo:photoUrl}).then(function(){
+      s.name=name;s.name_ja=nameJa;s.price=parseFloat(price);s.duration=parseInt(duration);s.description=desc||'';s.description_ja=descJa||'';s.photo=photoUrl;
       renderAdmin();renderServices();
     });
   }
